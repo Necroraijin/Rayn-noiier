@@ -18,7 +18,7 @@ export default function DraftingStudioPage() {
 
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-6">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Drafting Studio</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">AI-Assisted Document Preparation</p>
@@ -33,8 +33,8 @@ export default function DraftingStudioPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full flex-1 min-h-0">
-         <div className="col-span-8 flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-white/[0.01]">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full flex-1 min-h-0">
+         <div className="lg:col-span-8 flex flex-col border border-white/10 rounded-2xl overflow-hidden bg-white/[0.01]">
             <div className="h-12 border-b border-white/10 flex items-center px-4 justify-between bg-black/50">
               <div className="text-xs font-mono text-white/50 flex items-center gap-2">
                  <FileText className="w-4 h-4" />
@@ -52,7 +52,7 @@ export default function DraftingStudioPage() {
             />
          </div>
 
-         <div className="col-span-4 flex flex-col space-y-6">
+         <div className="lg:col-span-4 flex flex-col space-y-6">
             <Card className="bg-emerald-950/20 border-emerald-500/20 rounded-2xl shadow-none">
               <CardHeader className="pb-4">
                 <CardTitle className="text-xs uppercase tracking-widest font-bold text-emerald-400 flex items-center gap-2">

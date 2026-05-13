@@ -25,7 +25,7 @@ export default function ResearchHubPage() {
            </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
            <Card className="bg-white/[0.02] border-white/10 rounded-xl hover:bg-white/[0.04] transition-colors cursor-pointer group shadow-none">
              <CardHeader className="pb-2">
                <BookOpen className="w-5 h-5 text-emerald-400 mb-2 opacity-70 group-hover:opacity-100" />

@@ -33,7 +33,7 @@ export default function CalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="col-span-2 bg-white/[0.02] border-white/10 rounded-2xl shadow-none flex flex-col">
+        <Card className="md:col-span-2 bg-white/[0.02] border-white/10 rounded-2xl shadow-none flex flex-col">
           <CardHeader>
             <CardTitle className="text-xl font-light italic font-serif">Agenda: {date ? date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) : "Select a date"}</CardTitle>
             <CardDescription className="text-white/40 text-[10px] tracking-widest uppercase">Upcoming appointments and hard deadlines</CardDescription>

@@ -6,7 +6,7 @@ import { CheckSquare, Clock, AlertTriangle, AlertCircle } from "lucide-react"
 export default function TasksPage() {
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-10">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Task Manager</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">My Assignments & Delegated Items</p>
@@ -16,8 +16,8 @@ export default function TasksPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full">
-         <div className="col-span-8 flex flex-col space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+         <div className="lg:col-span-8 flex flex-col space-y-6">
             <h2 className="text-xs uppercase tracking-widest font-bold text-white/40">My Queue</h2>
             
             <div className="space-y-3">
@@ -76,7 +76,7 @@ export default function TasksPage() {
             </div>
          </div>
 
-         <div className="col-span-4 flex flex-col space-y-6">
+         <div className="lg:col-span-4 flex flex-col space-y-6">
            <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 flex-col flex h-full">
              <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-6 flex items-center gap-2">
                Workload Intelligence

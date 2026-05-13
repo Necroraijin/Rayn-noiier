@@ -9,7 +9,7 @@ export default function LearningCenterPage() {
   const { role } = useAuth()
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-10">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Learning Center</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">Firm Methodologies & Case Studies</p>
@@ -21,8 +21,8 @@ export default function LearningCenterPage() {
         )}
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full">
-         <div className="col-span-8 space-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+         <div className="lg:col-span-8 space-y-8">
            <section>
              <h2 className="text-xs font-bold uppercase tracking-widest text-white/40 mb-4">Required Training Tracks</h2>
              <div className="grid gap-4">
@@ -80,7 +80,7 @@ export default function LearningCenterPage() {
            </section>
          </div>
 
-         <div className="col-span-4 space-y-6">
+         <div className="lg:col-span-4 space-y-6">
             <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
               <CardHeader className="pb-4 border-b border-white/10">
                 <CardTitle className="text-[10px] tracking-widest uppercase font-bold text-white/60">My Progress</CardTitle>

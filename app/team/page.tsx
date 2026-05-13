@@ -25,8 +25,8 @@ export default function TeamWorkloadPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full">
-         <div className="col-span-8 flex flex-col space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+         <div className="lg:col-span-8 flex flex-col space-y-6">
             <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
               <CardHeader className="border-b border-white/10">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest text-white/80">Direct Reports Allocation</CardTitle>
@@ -34,7 +34,7 @@ export default function TeamWorkloadPage() {
               <CardContent className="pt-6 space-y-8">
                 {team.map((member) => (
                   <div key={member.name} className="flex flex-col space-y-3">
-                    <div className="flex justify-between items-end">
+                    <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
                       <div>
                         <div className="text-base font-bold text-white/90">{member.name}</div>
                         <div className="text-[10px] font-mono text-white/40 uppercase">{member.role}</div>
@@ -61,7 +61,7 @@ export default function TeamWorkloadPage() {
             </Card>
          </div>
 
-         <div className="col-span-4 flex flex-col space-y-6">
+         <div className="lg:col-span-4 flex flex-col space-y-6">
             <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
               <CardHeader>
                 <CardTitle className="text-xs tracking-widest uppercase font-bold text-emerald-400">AI Recommendations</CardTitle>

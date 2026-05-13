@@ -14,7 +14,7 @@ export default function ClientsPage() {
 
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-10">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Client Portfolio</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">Relationship Intelligence & Metrics</p>
@@ -28,7 +28,7 @@ export default function ClientsPage() {
          </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 md:grid-cols-3 gap-6 w-full">
          {clients.map((client) => (
            <Card key={client.name} className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
              <CardHeader className="pb-4">
@@ -45,7 +45,7 @@ export default function ClientsPage() {
                </div>
              </CardHeader>
              <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <div className="text-[9px] uppercase tracking-widest text-white/40">YTD Revenue</div>
                     <div className="text-lg font-mono text-white/90">{client.revenue}</div>

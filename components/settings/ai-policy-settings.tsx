@@ -55,7 +55,7 @@ export function AIPolicySettings() {
           </CardHeader>
           <CardContent className="space-y-8">
             <div className="space-y-4">
-              <div className="flex justify-between items-end">
+              <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
                 <Label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Minimum Confidence Threshold</Label>
                 <span className="font-mono text-emerald-400 text-xs">85%</span>
               </div>

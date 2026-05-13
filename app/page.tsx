@@ -11,9 +11,9 @@ export default function DashboardPage() {
   
   if (role === "INTERN") {
     return (
-      <div className="grid grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="col-span-8 flex flex-col">
-          <div className="flex justify-between items-end mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
             <div>
               <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Trainee Dashboard</h1>
               <p className="text-white/40 text-xs tracking-widest uppercase">Supervised Tasks & Mentorship</p>
@@ -41,7 +41,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-4 flex flex-col space-y-8">
+        <div className="lg:col-span-4 flex flex-col space-y-8">
            <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 flex-1">
              <h3 className="text-xs uppercase tracking-widest font-bold text-emerald-400 mb-4">Focus Tasks</h3>
              <div className="space-y-4">
@@ -72,9 +72,9 @@ export default function DashboardPage() {
     ];
 
     return (
-      <div className="grid grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="col-span-8 flex flex-col">
-          <div className="flex justify-between items-end mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
             <div>
               <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Firm Overview</h1>
               <p className="text-white/40 text-xs tracking-widest uppercase">System-wide Analytics & AI Insights</p>
@@ -85,7 +85,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 grid-cols-2 mb-8">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
             {adminKpis.map((kpi, index) => (
               <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -100,7 +100,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid gap-6 grid-cols-2 flex-1">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 flex-1">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col">
               <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4 text-emerald-400/80">Predictive Caseload Forecasting</div>
               <div className="border-l-2 border-emerald-500/30 pl-4 py-2 mt-4">
@@ -149,7 +149,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-4 flex flex-col space-y-8">
+        <div className="lg:col-span-4 flex flex-col space-y-8">
           <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col">
              <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">Client Risk Scoring</h2>
              <div className="space-y-6 flex-1">
@@ -203,9 +203,9 @@ export default function DashboardPage() {
     ];
 
     return (
-      <div className="grid grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="col-span-8 flex flex-col">
-          <div className="flex justify-between items-end mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
             <div>
               <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Partner Desk</h1>
               <p className="text-white/40 text-xs tracking-widest uppercase">My Book of Business & Team Analytics</p>
@@ -216,7 +216,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 grid-cols-2 mb-8">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
             {partnerKpis.map((kpi, index) => (
               <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -231,7 +231,7 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          <div className="grid gap-6 grid-cols-2 flex-1">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 flex-1">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col">
               <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4 text-emerald-400/80">Pending Sign-off Queue</div>
               <div className="space-y-4 mt-2">
@@ -276,7 +276,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-4 flex flex-col space-y-8">
+        <div className="lg:col-span-4 flex flex-col space-y-8">
           <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col">
              <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">My Client Portfolio Alerts</h2>
              <div className="space-y-6 flex-1">
@@ -315,9 +315,9 @@ export default function DashboardPage() {
 
   if (role === "BILLING_ADMIN") {
     return (
-      <div className="grid grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="col-span-8 flex flex-col">
-          <div className="flex justify-between items-end mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
             <div>
               <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Finance & Billing</h1>
               <p className="text-white/40 text-xs tracking-widest uppercase">Revenue Management & Forecasting</p>
@@ -328,7 +328,7 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="grid gap-6 grid-cols-3 mb-8">
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-8">
             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                <div className="text-[10px] uppercase text-white/40 tracking-[0.2em] mb-4">WIP (Unbilled)</div>
                <div className="text-3xl font-mono">$1.2M</div>
@@ -367,7 +367,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-4 flex flex-col space-y-8">
+        <div className="lg:col-span-4 flex flex-col space-y-8">
            <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 flex-1">
              <h3 className="text-xs uppercase tracking-widest font-bold text-emerald-400 mb-4">Revenue Forecasting</h3>
              <p className="text-xs text-white/70 leading-relaxed mb-6">
@@ -393,9 +393,9 @@ export default function DashboardPage() {
 
   if (role === "GUEST_CLIENT") {
     return (
-      <div className="grid grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="col-span-8 flex flex-col">
-          <div className="flex justify-between items-end mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
+        <div className="lg:col-span-8 flex flex-col">
+          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
             <div>
               <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Client Portal</h1>
               <p className="text-white/40 text-xs tracking-widest uppercase">Secure Communication & Matter Tracker</p>
@@ -432,7 +432,7 @@ export default function DashboardPage() {
              </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
              <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
                <h3 className="text-xs uppercase tracking-widest font-bold text-white/40 mb-4">Recent Documents</h3>
                <div className="space-y-4">
@@ -469,7 +469,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-4 flex flex-col space-y-8">
+        <div className="lg:col-span-4 flex flex-col space-y-8">
            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex-1">
              <h3 className="text-xs uppercase tracking-widest font-bold text-white/40 mb-4">Upcoming Hearings</h3>
              <div className="space-y-4">
@@ -512,9 +512,9 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="grid grid-cols-12 gap-8 h-full">
-      <div className="col-span-8 flex flex-col">
-        <div className="flex justify-between items-end mb-8">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
+      <div className="lg:col-span-8 flex flex-col">
+        <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
           <div>
             <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Rayn Intelligence</h1>
             <p className="text-white/40 text-xs tracking-widest uppercase">Analysis & Automated Summarization</p>
@@ -525,7 +525,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 grid-cols-2 mb-8">
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
           {kpis.map((kpi, index) => (
             <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
               <div className="flex items-center justify-between mb-4">
@@ -556,7 +556,7 @@ export default function DashboardPage() {
                 Preliminary analysis indicates a 72% likelihood of motion for summary judgment success based on precedent case <span className="text-white underline decoration-white/30">Peterson v. Global Tech</span>. Discrepancies found in Section 4.2 of the opposing counsel&apos;s brief. Focus recommended on clause 8.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white/[0.02] border border-white/5 p-4 rounded-lg">
                 <div className="text-[9px] uppercase text-white/30 mb-2">Risk Vector</div>
                 <div className="text-xl font-mono text-emerald-400">LOW</div>
@@ -579,7 +579,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="col-span-4 flex flex-col space-y-8">
+      <div className="lg:col-span-4 flex flex-col space-y-8">
         <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02]">
           <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">Case Progress</h2>
           <div className="space-y-6">

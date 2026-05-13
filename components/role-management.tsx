@@ -271,14 +271,14 @@ export default function RoleManagement() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-2 mt-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-auto">
                      <Button variant="outline" onClick={() => setViewingRole(tier.id)} className="text-[10px] font-bold uppercase tracking-widest border-white/10 text-white/70 hover:text-white hover:bg-white/10 hover:border-white/20 rounded h-10 gap-2">
                        <Users className="h-4 w-4" /> View
                      </Button>
                      <Button variant="outline" onClick={() => handleOpenRoleModal(tier)} className="text-[10px] font-bold uppercase tracking-widest border-white/10 text-white/70 hover:text-white hover:bg-white/10 hover:border-white/20 rounded h-10 gap-2">
                        <Edit className="h-3 w-3" /> Edit
                      </Button>
-                     <Button variant="outline" onClick={() => handleDeleteRole(tier.id)} className="col-span-2 text-[10px] font-bold uppercase tracking-widest border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/30 rounded h-10 gap-2">
+                     <Button variant="outline" onClick={() => handleDeleteRole(tier.id)} className="md:col-span-2 text-[10px] font-bold uppercase tracking-widest border-red-500/20 text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/30 rounded h-10 gap-2">
                        <Trash2 className="h-3 w-3" /> Remove Role
                      </Button>
                   </div>

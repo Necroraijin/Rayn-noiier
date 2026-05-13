@@ -18,7 +18,7 @@ export default function StrategyRoomPage() {
 
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Strategy Room</h1>
@@ -28,8 +28,8 @@ export default function StrategyRoomPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full">
-        <div className="col-span-4 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+        <div className="lg:col-span-4 space-y-6">
           <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
             <CardHeader className="pb-4 border-b border-white/10">
               <CardTitle className="text-sm font-bold tracking-widest uppercase text-white/80">Configure Simulation</CardTitle>
@@ -79,7 +79,7 @@ export default function StrategyRoomPage() {
           </Card>
         </div>
 
-        <div className="col-span-8 flex flex-col space-y-6">
+        <div className="lg:col-span-8 flex flex-col space-y-6">
           {!analyzed && !analyzing && (
             <div className="flex-1 border border-white/10 rounded-2xl flex flex-col items-center justify-center bg-white/[0.01]">
                <Sparkles className="w-12 h-12 text-white/10 mb-4" />
@@ -98,7 +98,7 @@ export default function StrategyRoomPage() {
 
           {analyzed && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-               <div className="grid grid-cols-2 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <Card className="bg-emerald-950/20 border-emerald-500/20 rounded-2xl shadow-none">
                    <CardHeader className="pb-2">
                      <CardTitle className="text-[10px] font-bold tracking-widest uppercase text-emerald-500 flex items-center gap-2">
@@ -132,7 +132,7 @@ export default function StrategyRoomPage() {
                  <CardHeader className="border-b border-white/10">
                    <CardTitle className="text-sm font-serif italic text-white/90">Outcome Probability Board</CardTitle>
                  </CardHeader>
-                 <CardContent className="pt-6 grid grid-cols-3 gap-8">
+                 <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                    <div className="space-y-3">
                      <div className="text-[10px] font-bold uppercase tracking-widest text-white/40">Settle (Favorable)</div>
                      <div className="text-4xl font-mono text-emerald-400">62%</div>
@@ -151,7 +151,7 @@ export default function StrategyRoomPage() {
                  </CardContent>
                </Card>
 
-               <div className="grid grid-cols-2 gap-6">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="border border-white/10 bg-white/5 rounded-2xl p-6">
                     <h3 className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-4 flex items-center gap-2">
                       <Sword className="h-3 w-3" />

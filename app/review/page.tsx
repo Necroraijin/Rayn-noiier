@@ -7,7 +7,7 @@ import { CheckCircle2, XCircle, FileText, Bot, Clock } from "lucide-react"
 export default function ReviewQueuePage() {
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-10">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Sign-off Queue</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">Pending Document & Strategy Approvals</p>
@@ -20,8 +20,8 @@ export default function ReviewQueuePage() {
 
       <div className="w-full flex-1 flex flex-col space-y-6">
          <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none overflow-hidden">
-           <div className="grid grid-cols-12 border-b border-white/10 bg-white/[0.01]">
-             <div className="col-span-8 p-6 flex flex-col justify-center">
+           <div className="grid grid-cols-1 lg:grid-cols-12 border-b border-white/10 bg-white/[0.01]">
+             <div className="lg:col-span-8 p-6 flex flex-col justify-center">
                <div className="flex items-center gap-3 mb-2">
                  <Badge className="bg-blue-500/10 text-blue-400 border border-blue-500/20 font-mono tracking-widest text-[9px] uppercase"><Bot className="w-3 h-3 inline mr-1" /> AI Drafted</Badge>
                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1"><Clock className="w-3 h-3" /> Submitted 2h ago</span>
@@ -29,7 +29,7 @@ export default function ReviewQueuePage() {
                <h3 className="text-xl font-serif italic text-white/90">Client Status Update Email</h3>
                <p className="text-xs text-white/50 font-mono tracking-widest uppercase mt-1">Matrix Corp Defamation Limit</p>
              </div>
-             <div className="col-span-4 p-6 border-l border-white/10 flex items-center justify-end gap-2">
+             <div className="lg:col-span-4 p-6 border-l border-white/10 flex items-center justify-end gap-2">
                <button className="h-10 px-4 flex items-center justify-center border border-white/20 text-white hover:bg-white/10 transition-colors text-xs font-bold uppercase tracking-widest rounded">
                  Review Track Changes
                </button>
@@ -56,8 +56,8 @@ export default function ReviewQueuePage() {
          </Card>
 
          <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none overflow-hidden opacity-70">
-           <div className="grid grid-cols-12 bg-white/[0.01]">
-             <div className="col-span-8 p-6 flex flex-col justify-center">
+           <div className="grid grid-cols-1 lg:grid-cols-12 bg-white/[0.01]">
+             <div className="lg:col-span-8 p-6 flex flex-col justify-center">
                <div className="flex items-center gap-3 mb-2">
                  <Badge className="bg-white/10 text-white border border-white/20 font-mono tracking-widest text-[9px] uppercase">Associate Draft</Badge>
                  <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono flex items-center gap-1"><Clock className="w-3 h-3" /> Submitted 4h ago</span>
@@ -65,7 +65,7 @@ export default function ReviewQueuePage() {
                <h3 className="text-xl font-serif italic text-white/90">Motion to Dismiss</h3>
                <p className="text-xs text-white/50 font-mono tracking-widest uppercase mt-1">Estate of V. Richardson • Drafted by M. Tass</p>
              </div>
-             <div className="col-span-4 p-6 border-l border-white/10 flex flex-col justify-center gap-2">
+             <div className="lg:col-span-4 p-6 border-l border-white/10 flex flex-col justify-center gap-2">
                <button className="h-10 px-4 flex items-center justify-center border border-white/20 text-white hover:bg-white/10 transition-colors text-xs font-bold uppercase tracking-widest rounded bg-white/[0.02]">
                  AI Review Required
                </button>

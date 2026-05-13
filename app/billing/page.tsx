@@ -7,15 +7,15 @@ import { Receipt, Search, FileText, CheckCircle2, Clock } from "lucide-react"
 export default function BillingPage() {
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-10">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Timesheets & Billing</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">Pre-bill review and write-offs</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full">
-         <div className="col-span-8 flex flex-col space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+         <div className="lg:col-span-8 flex flex-col space-y-6">
             <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
               <CardHeader className="border-b border-white/10 flex flex-row items-center justify-between py-4">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest text-white/80">Pending Proformas</CardTitle>
@@ -70,7 +70,7 @@ export default function BillingPage() {
             </Card>
          </div>
          
-         <div className="col-span-4 space-y-6">
+         <div className="lg:col-span-4 space-y-6">
             <Card className="bg-emerald-950/20 border-emerald-500/20 rounded-2xl shadow-none">
               <CardHeader className="pb-2">
                 <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-emerald-400">Total Unbilled</CardTitle>

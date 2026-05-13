@@ -7,7 +7,7 @@ import { Library, Folder, Search, Filter, FileText } from "lucide-react"
 export default function DocumentLibraryPage() {
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-10">
-      <div className="border-b border-white/10 pb-4 w-full flex justify-between items-end">
+      <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <h1 className="text-4xl font-light tracking-tighter mb-2 italic font-serif">Firm Precedent Library</h1>
           <p className="text-white/40 text-xs tracking-widest uppercase">Verified Knowledge Base & Templates</p>
@@ -31,8 +31,8 @@ export default function DocumentLibraryPage() {
          </button>
       </div>
 
-      <div className="grid grid-cols-12 gap-8 w-full">
-         <div className="col-span-3 space-y-2">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+         <div className="lg:col-span-3 space-y-2">
             <h3 className="text-[10px] uppercase tracking-widest font-bold text-white/30 mb-4 px-2">Categories</h3>
             
             <div className="flex items-center gap-3 px-3 py-2 bg-white/5 border border-white/10 rounded-lg cursor-pointer">
@@ -53,7 +53,7 @@ export default function DocumentLibraryPage() {
             </div>
          </div>
 
-         <div className="col-span-9 space-y-4">
+         <div className="lg:col-span-9 space-y-4">
             <Card className="bg-white/[0.02] border-white/10 hover:bg-white/[0.04] transition-colors cursor-pointer group shadow-none">
               <CardContent className="p-4 flex items-start justify-between">
                 <div className="flex items-start gap-4">
