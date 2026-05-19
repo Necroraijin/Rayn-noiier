@@ -3,6 +3,7 @@
 import React, { useState } from "react"
 import { Shield, KeyRound, Loader2, Scale } from "lucide-react"
 import { useAuth, Role } from "@/lib/auth-context"
+import { getUsers } from "@/lib/local-db"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -10,36 +11,50 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const { login } = useAuth()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setTimeout(() => {
-      setIsLoading(false)
-      let assignedRole: Role = "ASSOCIATE"
-      const lowerEmail = email.toLowerCase()
-      if (lowerEmail.includes("admin") && !lowerEmail.includes("billing")) {
-        assignedRole = "SUPER_ADMIN"
-      } else if (lowerEmail.includes("equity")) {
-        assignedRole = "EQUITY_PARTNER"
-      } else if (lowerEmail.includes("partner") || lowerEmail.includes("director")) {
-        assignedRole = "SALARIED_PARTNER"
-      } else if (lowerEmail.includes("counsel")) {
-        assignedRole = "COUNSEL"
-      } else if (lowerEmail.includes("senior")) {
-        assignedRole = "SENIOR_ASSOCIATE"
-      } else if (lowerEmail.includes("associate")) {
-        assignedRole = "ASSOCIATE"
-      } else if (lowerEmail.includes("intern") || lowerEmail.includes("trainee") || lowerEmail.includes("junior")) {
-        assignedRole = "INTERN"
-      } else if (lowerEmail.includes("paralegal")) {
-        assignedRole = "PARALEGAL"
-      } else if (lowerEmail.includes("billing") || lowerEmail.includes("finance")) {
-        assignedRole = "BILLING_ADMIN"
-      } else if (lowerEmail.includes("client") || lowerEmail.includes("guest")) {
-        assignedRole = "GUEST_CLIENT"
-      }
-      login(email, assignedRole)
-    }, 1500)
+    
+    try {
+      const users = await getUsers();
+      const lowerEmail = email.toLowerCase();
+      const localUser = users.find(u => u.email.toLowerCase() === lowerEmail);
+      
+      setTimeout(() => {
+        setIsLoading(false)
+        if (localUser) {
+          login(email, localUser.role as Role)
+          return
+        }
+        
+        let assignedRole: Role = "ASSOCIATE"
+        if (lowerEmail.includes("admin") && !lowerEmail.includes("billing")) {
+          assignedRole = "SUPER_ADMIN"
+        } else if (lowerEmail.includes("equity")) {
+          assignedRole = "EQUITY_PARTNER"
+        } else if (lowerEmail.includes("partner") || lowerEmail.includes("director")) {
+          assignedRole = "SALARIED_PARTNER"
+        } else if (lowerEmail.includes("counsel")) {
+          assignedRole = "COUNSEL"
+        } else if (lowerEmail.includes("senior")) {
+          assignedRole = "SENIOR_ASSOCIATE"
+        } else if (lowerEmail.includes("associate")) {
+          assignedRole = "ASSOCIATE"
+        } else if (lowerEmail.includes("intern") || lowerEmail.includes("trainee") || lowerEmail.includes("junior")) {
+          assignedRole = "INTERN"
+        } else if (lowerEmail.includes("paralegal")) {
+          assignedRole = "PARALEGAL"
+        } else if (lowerEmail.includes("billing") || lowerEmail.includes("finance")) {
+          assignedRole = "BILLING_ADMIN"
+        } else if (lowerEmail.includes("client") || lowerEmail.includes("guest")) {
+          assignedRole = "GUEST_CLIENT"
+        }
+        login(email, assignedRole)
+      }, 1500)
+    } catch (err) {
+       console.error("Local DB fetch failed", err);
+       setIsLoading(false);
+    }
   }
 
   return (
