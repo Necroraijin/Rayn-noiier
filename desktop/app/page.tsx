@@ -3,12 +3,31 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Clock, Users, Scale, ShieldAlert, Sparkles } from 'lucide-react';
+import { FileText, Clock, Users, Scale, ShieldAlert, Sparkles, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
+import { useNav } from '@/lib/nav-context';
 import { SuperAdminDashboard } from '@/components/dashboards/super-admin-dashboard';
 import { PartnerDashboard } from '@/components/dashboards/partner-dashboard';
-import { useAuth } from '@/lib/auth-context';
+import { DraftingStudio } from '@/components/features/drafting-studio';
+import { SettingsPage } from '@/components/features/settings-page';
+import { TasksPage } from '@/components/features/tasks-page';
+import { MattersPage } from '@/components/features/matters-page';
+import { AnalyticsPage } from '@/components/features/analytics-page';
+import { AuditPage } from '@/components/features/audit-page';
+import { BillingPage } from '@/components/features/billing-page';
+import { CalendarPage } from '@/components/features/calendar-page';
+import { ClientsPage } from '@/components/features/clients-page';
+import { CommunicationsPage } from '@/components/features/communications-page';
+import { DocumentsPage } from '@/components/features/documents-page';
+import { LearningPage } from '@/components/features/learning-page';
+import { LibraryPage } from '@/components/features/library-page';
+import { ResearchPage } from '@/components/features/research-page';
+import { ReviewPage } from '@/components/features/review-page';
+import { StrategyPage } from '@/components/features/strategy-page';
+import { TeamPage } from '@/components/features/team-page';
 
-export default function DashboardPage() {
+
+function DefaultDashboard() {
   const { role } = useAuth();
   
   if (role === "INTERN") {
@@ -264,152 +283,90 @@ export default function DashboardPage() {
     );
   }
 
-  const kpis = [
-    { title: 'Active Matters', value: '42', change: '+2', icon: Scale },
-    { title: 'Pending Review', value: '18', change: '-5', icon: FileText },
-    { title: 'Upcoming Deadlines', value: '07', change: 'Next 48h', icon: Clock },
-    { title: 'Active Clients', value: '154', change: '+12', icon: Users },
-  ];
-
+  // Fallback default
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
-      <div className="lg:col-span-8 flex flex-col">
-        <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-          <div>
-            <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Rayn Intelligence</h1>
-            <p className="text-white/40 text-xs tracking-widest uppercase">Analysis & Automated Summarization</p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-mono">04</div>
-            <div className="text-[9px] uppercase tracking-tighter opacity-40">Active Simulations</div>
-          </div>
-        </div>
-
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
-          {kpis.map((kpi, index) => (
-            <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                 <div className="text-[10px] uppercase text-white/40 tracking-[0.2em]">{kpi.title}</div>
-                 <kpi.icon className="h-4 w-4 text-white/20" />
-              </div>
-              <div className="flex items-end justify-between">
-                <div className="text-4xl font-mono">{kpi.value}</div>
-                <div className="text-[10px] font-mono text-white/40 uppercase">{kpi.change}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-6 relative flex flex-col mb-8 lg:mb-0">
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-[10px] uppercase tracking-[0.3em] font-bold py-1 px-3 border border-white/20 rounded-full">Neural Extraction Engine</span>
-            <div className="flex space-x-2 border border-white/10 px-2 py-1 bg-white/[0.02] rounded-full">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] my-auto"></div>
-              <span className="text-[9px] font-mono text-emerald-400">ONLINE</span>
-            </div>
-          </div>
-          
-          <div className="space-y-6 flex-1">
-            <div className="border-l-2 border-white/20 pl-4 py-2">
-              <h3 className="text-lg font-medium mb-1">Summation: Estate of V. Richardson</h3>
-              <p className="text-sm text-white/50 leading-relaxed max-w-lg">
-                Preliminary analysis indicates a 72% likelihood of motion for summary judgment success based on precedent case <span className="text-white underline decoration-white/30">Peterson v. Global Tech</span>. Discrepancies found in Section 4.2 of the opposing counsel&apos;s brief. Focus recommended on clause 8.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-lg">
-                <div className="text-[9px] uppercase text-white/30 mb-2">Risk Vector</div>
-                <div className="text-xl font-mono text-emerald-400">LOW</div>
-              </div>
-              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-lg">
-                <div className="text-[9px] uppercase text-white/30 mb-2">Entities Flagged</div>
-                <div className="text-xl font-mono">18</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <div className="text-[10px] uppercase tracking-widest mb-4 opacity-40">Suggested Queries</div>
-            <div className="flex flex-wrap gap-2">
-              <button className="px-3 py-2 bg-white text-black text-[10px] font-bold uppercase rounded hover:bg-white/90 transition">Draft Summary</button>
-              <button className="px-3 py-2 border border-white/20 text-white/80 hover:text-white text-[10px] font-bold uppercase rounded hover:bg-white/5 transition">Cross Reference Precedent</button>
-              <button className="px-3 py-2 border border-white/20 text-white/80 hover:text-white text-[10px] font-bold uppercase rounded hover:bg-white/5 transition">Extract Liability Clauses</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="lg:col-span-4 flex flex-col space-y-8">
-        <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02]">
-          <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">Case Progress</h2>
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="flex justify-between text-[11px] mb-2 font-mono text-white/80">
-                <span>SMITH V. OMNICORP</span>
-                <span className="text-white">85%</span>
-              </div>
-              <div className="w-full h-[2px] bg-white/10 overflow-hidden">
-                <div className="w-[85%] h-full bg-white"></div>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="flex justify-between text-[11px] mb-2 font-mono text-white/80">
-                <span>ESTATE OF M. JANE</span>
-                <span className="text-white">32%</span>
-              </div>
-              <div className="w-full h-[2px] bg-white/10 overflow-hidden">
-                <div className="w-[32%] h-full bg-white/40"></div>
-              </div>
-            </div>
-             <div className="relative">
-              <div className="flex justify-between text-[11px] mb-2 font-mono text-white/80">
-                <span>TECHSTART MERGER</span>
-                <span className="text-white">65%</span>
-              </div>
-              <div className="w-full h-[2px] bg-white/10 overflow-hidden">
-                <div className="w-[65%] h-full bg-white/40"></div>
-              </div>
-            </div>
-          </div>
-
-          <h2 className="text-xs uppercase tracking-[0.3em] font-bold mt-12 mb-6 text-white/40">Deadlines</h2>
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">14<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-              <div className="pt-1">
-                <div className="text-xs font-bold uppercase tracking-widest">Discovery Deadline</div>
-                <div className="text-[10px] text-white/50 tracking-wider">Rayn vs. Apex Corp</div>
-              </div>
-            </div>
-            <div className="flex items-start opacity-50 hover:opacity-100 transition-opacity">
-              <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">17<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-              <div className="pt-1">
-                <div className="text-xs font-bold uppercase tracking-widest">Arbitration Hearing</div>
-                <div className="text-[10px] text-white/50 tracking-wider">Client: Smithson</div>
-              </div>
-            </div>
-             <div className="flex items-start opacity-50 hover:opacity-100 transition-opacity">
-              <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">22<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-              <div className="pt-1">
-                <div className="text-xs font-bold uppercase tracking-widest">File Motion for SJ</div>
-                <div className="text-[10px] text-white/50 tracking-wider">Estate of V. Richardson</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="min-h-32 bg-white text-black p-4 rounded-2xl flex flex-col justify-between">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-black uppercase tracking-widest">Audit Session Log</span>
-            <div className="text-[9px] font-mono px-2 py-0.5 border border-black/20 rounded bg-black/5">SECURE_ACTIVE</div>
-          </div>
-          <div className="text-[10px] font-mono uppercase opacity-60 leading-tight space-y-1">
-            <p>14:22:04 User root updated permissions for Associate_04</p>
-            <p>14:21:55 Document 1024-B decrypted for analysis</p>
-            <p className="opacity-50">14:20:12 Session refreshed by token 0x9A...</p>
-          </div>
-        </div>
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center space-y-4 animate-in fade-in">
+        <LayoutDashboard className="w-12 h-12 text-white/20 mx-auto" />
+        <h1 className="text-4xl font-light tracking-tighter italic font-serif">Welcome to Rayn</h1>
+        <p className="text-xs uppercase tracking-widest text-white/40">Select an item from the sidebar to begin.</p>
       </div>
     </div>
-  );
+  )
+}
+
+export default function AppRouter() {
+  const { activeView } = useNav();
+  const { permissions } = useAuth();
+
+  // Strict dynamic rendering based on activeView AND permissions
+  switch (activeView) {
+    case 'Drafting':
+      if (permissions.includes("Drafting")) return <DraftingStudio />;
+      break;
+    case 'Settings':
+      if (permissions.includes("Settings")) return <SettingsPage />;
+      break;
+    case 'Tasks':
+      if (permissions.includes("Tasks")) return <TasksPage />;
+      break;
+    case 'Matters':
+      if (permissions.includes("Matters")) return <MattersPage />;
+      break;
+    case 'Analytics':
+      if (permissions.includes('Analytics')) return <AnalyticsPage />;
+      break;
+    case 'Audit':
+      if (permissions.includes('Audit')) return <AuditPage />;
+      break;
+    case 'Billing':
+      if (permissions.includes('Billing')) return <BillingPage />;
+      break;
+    case 'Calendar':
+      if (permissions.includes('Calendar')) return <CalendarPage />;
+      break;
+    case 'Clients':
+      if (permissions.includes('Clients')) return <ClientsPage />;
+      break;
+    case 'Comms':
+      if (permissions.includes('Comms')) return <CommunicationsPage />;
+      break;
+    case 'Analysis':
+      if (permissions.includes('Analysis')) return <DocumentsPage />;
+      break;
+    case 'Learning':
+      if (permissions.includes('Learning')) return <LearningPage />;
+      break;
+    case 'Library':
+      if (permissions.includes('Library')) return <LibraryPage />;
+      break;
+    case 'Research':
+      if (permissions.includes('Research')) return <ResearchPage />;
+      break;
+    case 'Review Queue':
+      if (permissions.includes('Review Queue')) return <ReviewPage />;
+      break;
+    case 'Strategy':
+      if (permissions.includes('Strategy')) return <StrategyPage />;
+      break;
+    case 'Team':
+      if (permissions.includes('Team')) return <TeamPage />;
+      break;
+    case 'dashboard':
+      return <DefaultDashboard />;
+    default:
+      if (permissions.includes(activeView)) {
+        return (
+          <div className="flex items-center justify-center h-full">
+             <div className="text-center text-white/40 uppercase tracking-widest text-[10px] font-bold border border-white/10 p-8 rounded-xl bg-white/[0.02]">
+                [{activeView}] Module Not Yet Migrated to SPA Component
+             </div>
+          </div>
+        )
+      }
+      break;
+  }
+
+  // If unauthorized or base state
+  return <DefaultDashboard />;
 }

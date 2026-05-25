@@ -23,33 +23,44 @@ export default function LoginPage() {
       setTimeout(() => {
         setIsLoading(false)
         if (localUser) {
-          login(email, localUser.role as Role)
+          login(email, localUser.role as Role, localUser.permissions || [])
           return
         }
         
         let assignedRole: Role = "ASSOCIATE"
+        let defaultPerms: string[] = []
         if (lowerEmail.includes("admin") && !lowerEmail.includes("billing")) {
           assignedRole = "SUPER_ADMIN"
+          defaultPerms = ["Tasks", "Strategy", "Research", "Matters", "Clients", "Team", "Review Queue", "Drafting", "Library", "Billing", "Analytics", "Analysis", "Calendar", "Comms", "Learning", "Audit", "Settings"]
         } else if (lowerEmail.includes("equity")) {
           assignedRole = "EQUITY_PARTNER"
+          defaultPerms = ["Tasks", "Strategy", "Matters", "Clients", "Team", "Review Queue", "Billing", "Analytics", "Analysis", "Calendar", "Comms"]
         } else if (lowerEmail.includes("partner") || lowerEmail.includes("director")) {
           assignedRole = "SALARIED_PARTNER"
+          defaultPerms = ["Tasks", "Strategy", "Matters", "Clients", "Team", "Review Queue", "Billing", "Analysis", "Calendar", "Comms"]
         } else if (lowerEmail.includes("counsel")) {
           assignedRole = "COUNSEL"
+          defaultPerms = ["Tasks", "Strategy", "Research", "Matters", "Drafting", "Library", "Analysis", "Calendar", "Comms"]
         } else if (lowerEmail.includes("senior")) {
           assignedRole = "SENIOR_ASSOCIATE"
+          defaultPerms = ["Tasks", "Research", "Matters", "Team", "Review Queue", "Drafting", "Billing", "Analysis", "Calendar", "Comms"]
         } else if (lowerEmail.includes("associate")) {
           assignedRole = "ASSOCIATE"
+          defaultPerms = ["Tasks", "Research", "Matters", "Drafting", "Billing", "Analysis", "Comms", "Learning"]
         } else if (lowerEmail.includes("intern") || lowerEmail.includes("trainee") || lowerEmail.includes("junior")) {
           assignedRole = "INTERN"
+          defaultPerms = ["Tasks", "Research", "Billing", "Analysis", "Calendar", "Comms", "Learning"]
         } else if (lowerEmail.includes("paralegal")) {
           assignedRole = "PARALEGAL"
+          defaultPerms = ["Tasks", "Matters", "Library", "Billing", "Analysis", "Calendar", "Comms"]
         } else if (lowerEmail.includes("billing") || lowerEmail.includes("finance")) {
           assignedRole = "BILLING_ADMIN"
+          defaultPerms = ["Billing", "Analytics"]
         } else if (lowerEmail.includes("client") || lowerEmail.includes("guest")) {
           assignedRole = "GUEST_CLIENT"
+          defaultPerms = ["Matters", "Billing", "Analysis", "Calendar", "Comms"]
         }
-        login(email, assignedRole)
+        login(email, assignedRole, defaultPerms)
       }, 1500)
     } catch (err) {
        console.error("Local DB fetch failed", err);

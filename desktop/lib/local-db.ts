@@ -6,11 +6,23 @@ const store = new LazyStore('data.json');
 export interface MockUser {
   email: string;
   role: string;
+  permissions: string[];
 }
 
 export interface Delegation {
   internEmail: string;
   matterId: string;
+}
+
+export interface IntegrationConfig {
+  googleWorkspace?: {
+    apiKey: string;
+    connected: boolean;
+  };
+  whatsapp?: {
+    webhookUrl: string;
+    connected: boolean;
+  };
 }
 
 export async function getUsers(): Promise<MockUser[]> {
@@ -23,13 +35,30 @@ export async function getUsers(): Promise<MockUser[]> {
   }
 }
 
-export async function addUser(email: string, role: string): Promise<void> {
+export async function addUser(email: string, role: string, permissions: string[] = []): Promise<void> {
   const users = await getUsers();
   if (!users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-    users.push({ email, role });
+    users.push({ email, role, permissions });
     await store.set('users', users);
     await store.save();
   }
+}
+
+export async function updateUser(originalEmail: string, newEmail: string, role: string, permissions: string[] = []): Promise<void> {
+  const users = await getUsers();
+  const index = users.findIndex(u => u.email.toLowerCase() === originalEmail.toLowerCase());
+  if (index !== -1) {
+    users[index] = { email: newEmail, role, permissions };
+    await store.set('users', users);
+    await store.save();
+  }
+}
+
+export async function deleteUser(email: string): Promise<void> {
+  const users = await getUsers();
+  const filteredUsers = users.filter(u => u.email.toLowerCase() !== email.toLowerCase());
+  await store.set('users', filteredUsers);
+  await store.save();
 }
 
 export async function getDelegations(lawyerEmail: string): Promise<Delegation[]> {
@@ -63,4 +92,19 @@ export async function addDelegation(lawyerEmail: string, internEmail: string, ma
     await store.set('delegations', delegations);
     await store.save();
   }
+}
+
+export async function getIntegrationConfig(): Promise<IntegrationConfig> {
+  try {
+    const config = await store.get<IntegrationConfig>('integrations');
+    return config || {};
+  } catch (error) {
+    console.error("Failed to get integration config from local DB", error);
+    return {};
+  }
+}
+
+export async function setIntegrationConfig(config: IntegrationConfig): Promise<void> {
+  await store.set('integrations', config);
+  await store.save();
 }
