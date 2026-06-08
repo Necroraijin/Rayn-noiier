@@ -1,12 +1,29 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Sparkles, Save, FileText, CheckCircle2, History, Pencil, PenTool } from "lucide-react"
+import { Sparkles, Save, FileText, CheckCircle2, History, Pencil, PenTool, ExternalLink } from "lucide-react"
+import { exportToGoogleDocs } from "@/lib/google-api"
+import { isAuthenticated, initiateGoogleLogin, setupDeepLinkListener } from "@/lib/google-auth"
 
 export default function DraftingStudioPage() {
   const [content, setContent] = useState("WHEREAS, the Parties desire to enter into this Agreement to govern the terms of their proposed merger;\n\nNOW, THEREFORE, in consideration of the mutual covenants contained herein, the Parties agree as follows:\n\n1. DEFINITIONS\n1.1 \"Closing Date\" means the date on which the Merger is consummated.")
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+
+  useEffect(() => {
+    setupDeepLinkListener();
+    
+    const handleAuthSuccess = async () => {
+      // Automatically trigger export after successful auth
+      const url = await exportToGoogleDocs("Draft Merger Agreement", content);
+      window.open(url, '_blank');
+      setIsExporting(false);
+    };
+
+    window.addEventListener('google-auth-success', handleAuthSuccess as EventListener);
+    return () => window.removeEventListener('google-auth-success', handleAuthSuccess as EventListener);
+  }, [content]);
 
   const handleGenerate = () => {
     setIsGenerating(true)
@@ -15,6 +32,25 @@ export default function DraftingStudioPage() {
       setContent(prev => prev + "\n\n1.2 \"Material Adverse Effect\" means any event, change, or occurrence that, individually or in the aggregate, has a material adverse effect on the business, results of operations, or financial condition of the Company.")
     }, 1500)
   }
+
+  const handleExportToDocs = async () => {
+    try {
+      setIsExporting(true);
+      const isAuth = await isAuthenticated();
+      if (!isAuth) {
+        await initiateGoogleLogin();
+        // State remains "Exporting..." until callback triggers handleAuthSuccess
+        return;
+      }
+      const url = await exportToGoogleDocs("Draft Merger Agreement", content);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error("Export failed:", error);
+      alert("Failed to export to Google Docs. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-6">
@@ -26,6 +62,14 @@ export default function DraftingStudioPage() {
         <div className="flex gap-3">
           <button className="flex items-center gap-2 px-4 py-2 border border-white/20 text-white/80 hover:text-white hover:bg-white/10 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">
             <History className="w-3 h-3" /> Version History
+          </button>
+          <button 
+            onClick={handleExportToDocs}
+            disabled={isExporting}
+            className="flex items-center gap-2 px-4 py-2 border border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded text-[10px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
+          >
+            {isExporting ? <Sparkles className="w-3 h-3 animate-spin" /> : <ExternalLink className="w-3 h-3" />}
+            {isExporting ? "Exporting..." : "Send to Docs"}
           </button>
           <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-black hover:bg-emerald-400 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">
             <CheckCircle2 className="w-3 h-3" /> Submit for Review

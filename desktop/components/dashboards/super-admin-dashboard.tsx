@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldAlert, Server, HardDrive, Cpu, Users, Plus, Loader2 } from 'lucide-react';
 import { addUser, getUsers, MockUser } from '@/lib/local-db';
 
@@ -10,14 +10,14 @@ export function SuperAdminDashboard() {
   const [newRole, setNewRole] = useState('ASSOCIATE');
   const [isAdding, setIsAdding] = useState(false);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     const u = await getUsers();
     setUsers(u);
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();

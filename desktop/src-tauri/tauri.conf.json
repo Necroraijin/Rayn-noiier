@@ -19,6 +19,9 @@
         "fullscreen": false
       }
     ],
+    "deepLink": {
+      "schemes": ["rayn"]
+    },
     "security": {
       "csp": null
     }

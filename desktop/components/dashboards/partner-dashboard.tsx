@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldAlert, Users, Scale, Clock, Briefcase, Plus, Loader2 } from 'lucide-react';
 import { getUsers, addDelegation, getDelegations, MockUser, Delegation } from '@/lib/local-db';
 import { useAuth } from '@/lib/auth-context';
@@ -13,19 +13,19 @@ export function PartnerDashboard() {
   const [selectedMatter, setSelectedMatter] = useState('MAT-2024-089');
   const [isDelegating, setIsDelegating] = useState(false);
 
-  useEffect(() => {
-    if (email) {
-      loadData();
-    }
-  }, [email]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!email) return;
     const users = await getUsers();
     setInterns(users.filter(u => u.role === 'INTERN'));
     const dels = await getDelegations(email);
     setDelegations(dels);
-  };
+  }, [email]);
+
+  useEffect(() => {
+    if (email) {
+      loadData();
+    }
+  }, [email, loadData]);
 
   const handleDelegate = async (e: React.FormEvent) => {
     e.preventDefault();
