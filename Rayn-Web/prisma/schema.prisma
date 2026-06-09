@@ -1,0 +1,106 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id              String     @id
+  name            String
+  domain          String
+  region          String
+  logo            String
+  plan            String     // "professional" | "enterprise" | "unlimited"
+  seatsTotal      Int
+  seatsUsed       Int
+  aiContextLimit  Int
+  aiMonthlyBudget Int
+  aiTokensUsed    Int
+  kmsKeyId        String
+  cognitoPoolId   String
+  rdsSchemaName   String
+  s3Bucket        String
+  createdAt       DateTime     @default(now())
+  users           User[]
+  cases           Case[]
+  documents       Document[]
+  auditLogs       AuditLog[]
+  preferences     Preference[]
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  role       String   // e.g., "SUPER_ADMIN", "ASSOCIATE"
+  status     String   // "Active", "Suspended"
+  lastActive String
+  mfaEnabled Boolean  @default(false)
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Case {
+  id           String     @id @default(uuid())
+  title        String
+  client       String
+  status       String     // "Active", "Closed"
+  progress     Int
+  assignee     String
+  practiceArea String
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  documents    Document[]
+}
+
+model Document {
+  id         String   @id @default(uuid())
+  name       String
+  s3Key      String
+  url        String
+  type       String
+  uploadedBy String
+  createdAt  DateTime @default(now())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  caseId     String?
+  case       Case?    @relation(fields: [caseId], references: [id])
+  embedding  Unsupported("vector(1536)")?
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  category  String   // "SYSTEM", "SECURITY"
+  event     String
+  actor     String
+  ip        String
+  severity  String   // "INFO", "WARNING", "CRITICAL"
+  details   String
+  timestamp DateTime @default(now())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Precedent {
+  id        String   @id @default(uuid())
+  title     String
+  citation  String
+  court     String
+  year      Int
+  summary   String
+  embedding Unsupported("vector(1536)")?
+}
+
+model Preference {
+  id        String   @id @default(uuid())
+  category  String   // e.g., "style", "clause"
+  original  String
+  corrected String
+  rationale String
+  embedding Unsupported("vector(1536)")?
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}

@@ -74,8 +74,25 @@ export function BillingSettings() {
     })
   }
 
-  const handlePlanChange = (plan: "professional" | "enterprise" | "unlimited") => {
+  const handlePlanChange = async (plan: "professional" | "enterprise" | "unlimited") => {
     if (plan === tenant.plan) return
+    try {
+      const res = await fetch("/api/billing/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        window.location.href = data.url
+        return
+      } else {
+        console.warn("Stripe Checkout URL generation skipped/unavailable, falling back to local DB updates: ", data.error)
+      }
+    } catch (err) {
+      console.error("Stripe Checkout redirection failed, falling back to local DB updates: ", err)
+    }
+
     updatePlan(plan)
     log({
       tenantId: tenant.id,

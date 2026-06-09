@@ -7,13 +7,47 @@ import { Sparkles, Save, FileText, CheckCircle2, History, Pencil, PenTool } from
 export default function DraftingStudioPage() {
   const [content, setContent] = useState("WHEREAS, the Parties desire to enter into this Agreement to govern the terms of their proposed merger;\n\nNOW, THEREFORE, in consideration of the mutual covenants contained herein, the Parties agree as follows:\n\n1. DEFINITIONS\n1.1 \"Closing Date\" means the date on which the Merger is consummated.")
   const [isGenerating, setIsGenerating] = useState(false)
+  const [prompt, setPrompt] = useState("")
+  const [researchNotes, setResearchNotes] = useState("")
+  const [complianceCritique, setComplianceCritique] = useState("")
+  const [retrievedDocs, setRetrievedDocs] = useState<{ name: string; key: string }[]>([])
+  const [error, setError] = useState<string | null>(null)
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return
     setIsGenerating(true)
-    setTimeout(() => {
+    setError(null)
+    try {
+      const res = await fetch("/api/agent/run", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ query: prompt })
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate content from active agents")
+      }
+
+      if (data.success) {
+        if (data.draftedText) {
+          setContent(prev => prev + "\n\n" + data.draftedText)
+        }
+        setResearchNotes(data.researchNotes || "")
+        setComplianceCritique(data.complianceCritique || "")
+        setRetrievedDocs(data.retrievedDocuments || [])
+      } else {
+        throw new Error(data.error || "Unsuccessful generation call")
+      }
+    } catch (err: any) {
+      console.error("Error running legal agents:", err)
+      setError(err.message || "An unexpected error occurred.")
+    } finally {
       setIsGenerating(false)
-      setContent(prev => prev + "\n\n1.2 \"Material Adverse Effect\" means any event, change, or occurrence that, individually or in the aggregate, has a material adverse effect on the business, results of operations, or financial condition of the Company.")
-    }, 1500)
+    }
   }
 
   return (
@@ -47,7 +81,7 @@ export default function DraftingStudioPage() {
             <textarea 
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="flex-1 w-full bg-transparent p-8 text-sm font-serif text-white/90 leading-relaxed outline-none resize-none"
+              className="flex-1 w-full bg-transparent p-8 text-sm font-serif text-white/90 leading-relaxed outline-none resize-none min-h-[400px]"
               spellCheck={false}
             />
          </div>
@@ -65,11 +99,18 @@ export default function DraftingStudioPage() {
                  </p>
                  <textarea 
                    placeholder="e.g., Draft a standard severability clause under Delaware law..."
+                   value={prompt}
+                   onChange={(e) => setPrompt(e.target.value)}
                    className="w-full bg-black/50 border border-white/10 rounded p-3 text-xs font-mono text-white/80 outline-none h-24 resize-none"
                  />
+                 {error && (
+                   <div className="bg-red-950/50 border border-red-500/30 text-red-200 text-[10px] p-3 rounded font-mono leading-relaxed max-w-full overflow-x-auto whitespace-pre-wrap animate-in fade-in">
+                     <strong>Quota / API Error:</strong> {error}
+                   </div>
+                 )}
                  <button 
                   onClick={handleGenerate}
-                  disabled={isGenerating}
+                  disabled={isGenerating || !prompt.trim()}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 rounded text-[10px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
                  >
                    {isGenerating ? <Sparkles className="w-3 h-3 animate-spin" /> : <PenTool className="w-3 h-3" />}
@@ -78,18 +119,50 @@ export default function DraftingStudioPage() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none flex-1">
+            <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
               <CardHeader className="pb-4 border-b border-white/10">
                 <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-white/60">Document Intelligence</CardTitle>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
-                <div className="border-l-2 border-yellow-500/50 pl-3">
-                  <h4 className="text-xs font-bold text-yellow-100 mb-1">Missing Clause Detected</h4>
-                  <p className="text-[10px] text-white/50 leading-relaxed font-serif">Standard confidentiality provisions are missing from this draft. This is highly irregular for merger agreements.</p>
-                  <button className="text-[9px] font-bold uppercase tracking-widest text-emerald-400 mt-2 hover:text-emerald-300">Auto-Insert Standard Form</button>
-                </div>
+                {complianceCritique ? (
+                  <div className="border-l-2 border-yellow-500/50 pl-3 animate-in fade-in">
+                    <h4 className="text-xs font-bold text-yellow-100 mb-1 font-mono">Critique Summary</h4>
+                    <p className="text-[10px] text-white/70 leading-relaxed font-serif whitespace-pre-wrap">{complianceCritique}</p>
+                  </div>
+                ) : (
+                  <div className="border-l-2 border-white/10 pl-3">
+                    <h4 className="text-xs font-bold text-white/40 mb-1">Standard Check Pending</h4>
+                    <p className="text-[10px] text-white/50 leading-relaxed font-serif">Run the AI Co-Pilot to automatically audit generated clauses for structural discrepancies or risks.</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {researchNotes && (
+               <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none">
+                 <CardHeader className="pb-4 border-b border-white/10">
+                   <CardTitle className="text-[10px] uppercase tracking-widest font-bold text-white/60">Research & Precedents</CardTitle>
+                 </CardHeader>
+                 <CardContent className="pt-6 space-y-4">
+                   <div className="text-[10px] text-white/70 leading-relaxed font-serif whitespace-pre-wrap max-h-48 overflow-y-auto">
+                     {researchNotes}
+                   </div>
+                   {retrievedDocs.length > 0 && (
+                     <div className="mt-4 pt-4 border-t border-white/10">
+                       <div className="text-[9px] uppercase tracking-[0.2em] font-bold text-emerald-400/80 mb-2">Sources Referenced (RAG)</div>
+                       <ul className="space-y-1.5">
+                         {retrievedDocs.map((doc, i) => (
+                           <li key={i} className="flex items-center gap-2 text-[10px] font-mono text-white/60">
+                             <FileText className="w-3.5 h-3.5 text-emerald-500/80 animate-pulse" />
+                             <span className="truncate">{doc.name}</span>
+                           </li>
+                         ))}
+                       </ul>
+                     </div>
+                   )}
+                 </CardContent>
+               </Card>
+            )}
          </div>
       </div>
     </div>

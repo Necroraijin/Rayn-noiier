@@ -173,6 +173,31 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [activeTenantId, setActiveTenantId] = useState<string>("rayn")
   const [userStore, setUserStore] = useState<Record<string, TenantUser[]>>(TENANT_USERS)
 
+  // Fetch active tenant data from database
+  useEffect(() => {
+    const fetchTenant = async () => {
+      try {
+        const res = await fetch("/api/tenant")
+        if (res.ok) {
+          const data = await res.json()
+          if (data.tenant) {
+            setTenants(prev => {
+              const exists = prev.find(t => t.id === data.tenant.id)
+              if (exists) {
+                return prev.map(t => t.id === data.tenant.id ? { ...t, ...data.tenant } : t)
+              }
+              return [...prev, data.tenant]
+            })
+            setActiveTenantId(data.tenant.id)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load active tenant parameters:", err)
+      }
+    }
+    fetchTenant()
+  }, [])
+
   // Persist tenant selection
   useEffect(() => {
     const saved = localStorage.getItem("rayn_tenant")
@@ -195,7 +220,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       ...prev,
       [activeTenantId]: [...(prev[activeTenantId] || []), { ...user, id: `u${Date.now()}` }],
     }))
-    // increment seats used
     setTenants(prev => prev.map(t => t.id === activeTenantId ? { ...t, seatsUsed: t.seatsUsed + 1 } : t))
   }, [activeTenantId])
 
@@ -218,15 +242,36 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     setTenants(prev => prev.map(t => t.id === activeTenantId ? { ...t, aiTokensUsed: t.aiTokensUsed + count } : t))
   }, [activeTenantId])
 
-  const addSeat = useCallback(() => {
-    setTenants(prev => prev.map(t => t.id === activeTenantId ? { ...t, seatsTotal: t.seatsTotal + 1 } : t))
-  }, [activeTenantId])
+  const addSeat = useCallback(async () => {
+    const nextSeats = tenant.seatsTotal + 1
+    setTenants(prev => prev.map(t => t.id === activeTenantId ? { ...t, seatsTotal: nextSeats } : t))
+    try {
+      await fetch("/api/tenant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateSeats", seatsTotal: nextSeats })
+      })
+    } catch (err) {
+      console.error("Error synchronizing seats update:", err)
+    }
+  }, [activeTenantId, tenant.seatsTotal])
 
-  const removeSeat = useCallback(() => {
-    setTenants(prev => prev.map(t => t.id === activeTenantId && t.seatsTotal > t.seatsUsed ? { ...t, seatsTotal: t.seatsTotal - 1 } : t))
-  }, [activeTenantId])
+  const removeSeat = useCallback(async () => {
+    if (tenant.seatsTotal <= tenant.seatsUsed) return
+    const nextSeats = tenant.seatsTotal - 1
+    setTenants(prev => prev.map(t => t.id === activeTenantId ? { ...t, seatsTotal: nextSeats } : t))
+    try {
+      await fetch("/api/tenant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updateSeats", seatsTotal: nextSeats })
+      })
+    } catch (err) {
+      console.error("Error synchronizing seats update:", err)
+    }
+  }, [activeTenantId, tenant.seatsTotal, tenant.seatsUsed])
 
-  const updatePlan = useCallback((plan: Tenant["plan"]) => {
+  const updatePlan = useCallback(async (plan: Tenant["plan"]) => {
     const limits: Record<string, { ctx: number; budget: number }> = {
       professional: { ctx: 100000, budget: 20000000 },
       enterprise: { ctx: 200000, budget: 50000000 },
@@ -238,6 +283,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       aiContextLimit: limits[plan].ctx,
       aiMonthlyBudget: limits[plan].budget,
     } : t))
+
+    try {
+      await fetch("/api/tenant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "updatePlan", plan })
+      })
+    } catch (err) {
+      console.error("Error synchronizing plan update:", err)
+    }
   }, [activeTenantId])
 
   return (
