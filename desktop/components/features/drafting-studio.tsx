@@ -2,53 +2,50 @@
 
 import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-<<<<<<< HEAD:desktop/app/drafting/page.tsx
-import { Sparkles, Save, FileText, CheckCircle2, History, Pencil, PenTool, ExternalLink } from "lucide-react"
-import { exportToGoogleDocs } from "@/lib/google-api"
-import { isAuthenticated, initiateGoogleLogin, setupDeepLinkListener } from "@/lib/google-auth"
-=======
-import { Sparkles, Save, FileText, CheckCircle2, History, Pencil, PenTool, Share2, Cloud, Mail, MessageSquare, Loader2, Check } from "lucide-react"
+import { Sparkles, Save, FileText, CheckCircle2, History, Pencil, PenTool, Share2, Cloud, Mail, MessageSquare, Loader2, Check, ExternalLink } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { getIntegrationConfig, IntegrationConfig } from "@/lib/local-db"
->>>>>>> d0478c5723b74f8f8fe56361cdd43c4fb45e7fad:desktop/components/features/drafting-studio.tsx
+import { exportToGoogleDocs } from "@/lib/google-api"
+import { isAuthenticated, initiateGoogleLogin, setupDeepLinkListener } from "@/lib/google-auth"
 
 export function DraftingStudio() {
   const [content, setContent] = useState("WHEREAS, the Parties desire to enter into this Agreement to govern the terms of their proposed merger;\n\nNOW, THEREFORE, in consideration of the mutual covenants contained herein, the Parties agree as follows:\n\n1. DEFINITIONS\n1.1 \"Closing Date\" means the date on which the Merger is consummated.")
   const [isGenerating, setIsGenerating] = useState(false)
-<<<<<<< HEAD:desktop/app/drafting/page.tsx
   const [isExporting, setIsExporting] = useState(false)
-
-  useEffect(() => {
-    setupDeepLinkListener();
-    
-    const handleAuthSuccess = async () => {
-      // Automatically trigger export after successful auth
-      const url = await exportToGoogleDocs("Draft Merger Agreement", content);
-      window.open(url, '_blank');
-      setIsExporting(false);
-    };
-
-    window.addEventListener('google-auth-success', handleAuthSuccess as EventListener);
-    return () => window.removeEventListener('google-auth-success', handleAuthSuccess as EventListener);
-  }, [content]);
-=======
-  
-  // Integration States
-  const [config, setConfig] = useState<IntegrationConfig>({});
-  const [isExportingDocs, setIsExportingDocs] = useState(false);
-  const [exportSuccess, setExportSuccess] = useState(false);
-  const [isSharingGmail, setIsSharingGmail] = useState(false);
-  const [isSharingWA, setIsSharingWA] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false)
+  const [isSharingGmail, setIsSharingGmail] = useState(false)
+  const [isSharingWA, setIsSharingWA] = useState(false)
+  const [config, setConfig] = useState<IntegrationConfig>({})
 
   useEffect(() => {
     loadIntegrations();
-  }, []);
+    setupDeepLinkListener();
+    
+    const handleAuthSuccess = async () => {
+      try {
+        setIsExporting(true);
+        const url = await exportToGoogleDocs("Draft Merger Agreement", content);
+        window.open(url, '_blank');
+        setExportSuccess(true);
+        setTimeout(() => setExportSuccess(false), 3000);
+      } catch (error) {
+        console.error("Export failed:", error);
+        alert("Failed to export to Google Docs. Please try again.");
+      } finally {
+        setIsExporting(false);
+      }
+    };
+
+    window.addEventListener('google-auth-success', handleAuthSuccess as EventListener);
+    return () => {
+      window.removeEventListener('google-auth-success', handleAuthSuccess as EventListener);
+    };
+  }, [content]);
 
   const loadIntegrations = async () => {
     const data = await getIntegrationConfig();
     setConfig(data);
   };
->>>>>>> d0478c5723b74f8f8fe56361cdd43c4fb45e7fad:desktop/components/features/drafting-studio.tsx
 
   const handleGenerate = () => {
     setIsGenerating(true)
@@ -58,10 +55,10 @@ export function DraftingStudio() {
     }, 1500)
   }
 
-<<<<<<< HEAD:desktop/app/drafting/page.tsx
   const handleExportToDocs = async () => {
     try {
       setIsExporting(true);
+      setExportSuccess(false);
       const isAuth = await isAuthenticated();
       if (!isAuth) {
         await initiateGoogleLogin();
@@ -70,28 +67,14 @@ export function DraftingStudio() {
       }
       const url = await exportToGoogleDocs("Draft Merger Agreement", content);
       window.open(url, '_blank');
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 3000);
     } catch (error) {
       console.error("Export failed:", error);
       alert("Failed to export to Google Docs. Please try again.");
     } finally {
       setIsExporting(false);
     }
-  };
-
-=======
-  const handleExportDocs = async () => {
-    if (!config.googleWorkspace?.connected) {
-      alert("Please connect Google Workspace in Settings -> Integrations first.");
-      return;
-    }
-    setIsExportingDocs(true);
-    setExportSuccess(false);
-    // Simulate API call to Google Docs API using stored config.googleWorkspace.apiKey
-    setTimeout(() => {
-      setIsExportingDocs(false);
-      setExportSuccess(true);
-      setTimeout(() => setExportSuccess(false), 3000);
-    }, 2000);
   };
 
   const handleShareGmail = async () => {
@@ -119,9 +102,6 @@ export function DraftingStudio() {
       alert("Draft link sent via WhatsApp.");
     }, 1500);
   };
-
-
->>>>>>> d0478c5723b74f8f8fe56361cdd43c4fb45e7fad:desktop/components/features/drafting-studio.tsx
   return (
     <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-6">
       <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
@@ -146,25 +126,13 @@ export function DraftingStudio() {
           </DropdownMenu>
 
           <button 
-            onClick={handleExportDocs}
-            disabled={isExportingDocs}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 rounded text-[10px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
-          >
-            {isExportingDocs ? <Loader2 className="w-3 h-3 animate-spin" /> : exportSuccess ? <Check className="w-3 h-3" /> : <Cloud className="w-3 h-3" />} 
-            {isExportingDocs ? "Exporting..." : exportSuccess ? "Exported" : "Export to Docs"}
-          </button>
-<<<<<<< HEAD:desktop/app/drafting/page.tsx
-          <button 
             onClick={handleExportToDocs}
             disabled={isExporting}
-            className="flex items-center gap-2 px-4 py-2 border border-blue-500/50 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded text-[10px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600/20 border border-blue-500/30 text-blue-400 hover:bg-blue-600/30 rounded text-[10px] font-bold uppercase tracking-widest transition-colors disabled:opacity-50"
           >
-            {isExporting ? <Sparkles className="w-3 h-3 animate-spin" /> : <ExternalLink className="w-3 h-3" />}
-            {isExporting ? "Exporting..." : "Send to Docs"}
+            {isExporting ? <Loader2 className="w-3 h-3 animate-spin" /> : exportSuccess ? <Check className="w-3 h-3" /> : <Cloud className="w-3 h-3" />} 
+            {isExporting ? "Exporting..." : exportSuccess ? "Exported" : "Export to Docs"}
           </button>
-=======
-
->>>>>>> d0478c5723b74f8f8fe56361cdd43c4fb45e7fad:desktop/components/features/drafting-studio.tsx
           <button className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-black hover:bg-emerald-400 rounded text-[10px] font-bold uppercase tracking-widest transition-colors">
             <CheckCircle2 className="w-3 h-3" /> Submit for Review
           </button>

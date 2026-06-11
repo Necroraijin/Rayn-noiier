@@ -49,7 +49,7 @@ function DefaultDashboard() {
                     <span className="font-bold text-sm text-emerald-400">Senior_Assoc_LJ</span>
                     <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">Just Now</span>
                   </div>
-                  <p className="text-xs text-white/80 leading-relaxed font-serif">"Excellent work on the Smithson case briefing. You caught the nuance in the dissenting opinion. For your next task, try using the AI Drafting Co-pilot to prepare the initial settlement letter, but remember to strictly review the confidentiality clauses."</p>
+                  <p className="text-xs text-white/80 leading-relaxed font-serif">&ldquo;Excellent work on the Smithson case briefing. You caught the nuance in the dissenting opinion. For your next task, try using the AI Drafting Co-pilot to prepare the initial settlement letter, but remember to strictly review the confidentiality clauses.&rdquo;</p>
                 </div>
                 <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
                   <div className="flex justify-between items-start mb-2">
@@ -205,7 +205,7 @@ function DefaultDashboard() {
                     <Sparkles className="w-3 h-3" /> Matter Status Explainer
                   </h3>
                   <p className="text-sm font-serif text-white/80 leading-relaxed">
-                    Your case is currently in the "Discovery" phase. This means your legal team and the opposing counsel are exchanging evidence and documents relevant to the case. We are currently waiting for OmniCorp to produce the final batch of internal emails requested last month. No action is required from your side at this moment.
+                    Your case is currently in the &ldquo;Discovery&rdquo; phase. This means your legal team and the opposing counsel are exchanging evidence and documents relevant to the case. We are currently waiting for OmniCorp to produce the final batch of internal emails requested last month. No action is required from your side at this moment.
                   </p>
                 </div>
              </div>
@@ -228,7 +228,7 @@ function DefaultDashboard() {
                    <div className="flex items-center gap-3">
                      <FileText className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
                      <div>
-                       <div className="text-sm text-white/90">Defendant's Initial Disclosures</div>
+                       <div className="text-sm text-white/90">Defendant&apos;s Initial Disclosures</div>
                        <div className="text-[9px] font-mono text-white/40 uppercase">Received • 1 Week Ago</div>
                      </div>
                    </div>
