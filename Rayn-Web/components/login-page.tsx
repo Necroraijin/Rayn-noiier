@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { Shield, KeyRound, Loader2, Lock, Fingerprint, ChevronRight, Building2, ArrowLeft, Eye, EyeOff, CheckCircle2, AlertTriangle, Globe } from "lucide-react"
 import { useAuth, Role } from "@/lib/auth-context"
+import { signIn } from "next-auth/react"
+import WavePlusSymbols from "./wave-plus-symbols"
 
 // ── Simulated tenant directory ──────────────────────────────────────
 const TENANTS = [
@@ -39,8 +41,14 @@ const USER_DIRECTORY: Record<string, { email: string; name: string; role: Role; 
 type Step = "tenant" | "credentials" | "mfa" | "authenticating"
 
 export default function LoginPage() {
-  const [step, setStep] = useState<Step>("tenant")
-  const [selectedTenant, setSelectedTenant] = useState<typeof TENANTS[0] | null>(null)
+  const [step, setStep] = useState<Step>("credentials")
+  const [selectedTenant, setSelectedTenant] = useState<typeof TENANTS[0] | null>({
+    id: "rayn",
+    name: "Rayn & Partners LLP",
+    domain: "rayn.law",
+    region: "us-east-1",
+    logo: "R"
+  })
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -144,26 +152,42 @@ export default function LoginPage() {
   const performLogin = (loginEmail: string, role: Role) => {
     setStep("authenticating")
     setIsLoading(true)
+
+    // Check if the credentials correspond to mock domains
+    const isMockDomain = loginEmail.endsWith("@rayn.law") || loginEmail.endsWith("@apexlegal.com") || loginEmail.endsWith("@meridian.co.uk")
+
     setTimeout(() => {
-      login(loginEmail, role)
+      if (isMockDomain) {
+        login(loginEmail, role)
+      } else {
+        // Redirection to AWS Cognito hosted login screen via NextAuth
+        signIn("cognito", { callbackUrl: "/" })
+      }
     }, 2200)
   }
 
   const goBack = () => {
     setError("")
-    if (step === "mfa") { setStep("credentials"); setMfaCode(["", "", "", "", "", ""]); }
-    else if (step === "credentials") { setStep("tenant"); setEmail(""); setPassword(""); }
+    if (step === "mfa") { 
+      setStep("credentials")
+      setMfaCode(["", "", "", "", "", ""])
+    }
   }
 
   // ── Render ──────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen w-full bg-[#030303] text-[#F0F0F0] flex overflow-hidden font-sans">
+    <div className="min-h-screen w-full bg-[#030303] text-[#F0F0F0] flex overflow-hidden font-sans relative">
+      {/* Wave pattern of green + symbols at the top */}
+      <WavePlusSymbols count={10} className="absolute top-8 left-0 right-0 h-24 opacity-30 z-20" />
+
       {/* ─── Left Panel: Branding ─────────────────────────────────── */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative flex-col justify-between p-12 overflow-hidden">
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative flex-col justify-between p-12 overflow-hidden border-r border-white/5 bg-black">
         {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/80 via-[#030303] to-emerald-950/40" />
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-[#030303] to-emerald-950/20" />
+        
+        {/* Wave pattern of green + symbols for branding area */}
+        <WavePlusSymbols count={5} className="absolute top-[30%] left-0 right-0 h-20 opacity-20" />
 
         {/* Glow orbs */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] animate-pulse" />
@@ -220,7 +244,7 @@ export default function LoginPage() {
           {/* Header bar */}
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-3">
-              {step !== "tenant" && step !== "authenticating" && (
+              {step !== "credentials" && step !== "authenticating" && (
                 <button onClick={goBack} className="p-2 -ml-2 rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">
                   <ArrowLeft className="w-4 h-4" />
                 </button>
@@ -239,54 +263,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* ─── Step: Tenant Selection ───────────────────────────── */}
-          {step === "tenant" && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="mb-8">
-                <h2 className="text-2xl font-light font-serif italic tracking-tight mb-2">Select Workspace</h2>
-                <p className="text-[10px] uppercase tracking-[0.2em] text-white/40 font-mono">Choose your organization to continue</p>
-              </div>
 
-              <div className="space-y-3">
-                {TENANTS.map((tenant) => (
-                  <button
-                    key={tenant.id}
-                    onClick={() => handleTenantSelect(tenant)}
-                    className="w-full group flex items-center gap-4 p-5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/20 transition-all duration-300"
-                  >
-                    <div className="w-11 h-11 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-lg font-bold tracking-tighter text-white/60 group-hover:text-emerald-400 group-hover:border-emerald-500/20 group-hover:bg-emerald-500/5 transition-all shrink-0">
-                      {tenant.logo}
-                    </div>
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-medium text-white/80 group-hover:text-white transition-colors">{tenant.name}</div>
-                      <div className="text-[10px] text-white/30 font-mono uppercase tracking-widest mt-1">{tenant.domain} • {tenant.region}</div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-white/15 group-hover:text-emerald-400/60 transition-colors" />
-                  </button>
-                ))}
-              </div>
-
-              {/* SSO Divider */}
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/[0.06]" /></div>
-                <div className="relative flex justify-center text-[9px] uppercase tracking-[0.2em] font-mono">
-                  <span className="bg-[#030303] px-4 text-white/20">Or sign in with SSO</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { name: "Microsoft", abbr: "MS" },
-                  { name: "Google", abbr: "G" },
-                  { name: "Okta", abbr: "OK" },
-                ].map(sso => (
-                  <button key={sso.name} className="flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white/60">
-                    <span className="text-xs font-mono">{sso.abbr}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* ─── Step: Credentials ────────────────────────────────── */}
           {step === "credentials" && (
@@ -320,7 +297,35 @@ export default function LoginPage() {
                     required
                     autoFocus
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setEmail(val)
+                      const parts = val.split("@")
+                      if (parts.length > 1) {
+                        const domain = parts[1].toLowerCase()
+                        const matched = TENANTS.find(t => t.domain.toLowerCase() === domain)
+                        if (matched) {
+                          setSelectedTenant(matched)
+                        } else if (domain.includes(".")) {
+                          const namePrefix = domain.split(".")[0]
+                          setSelectedTenant({
+                            id: "custom",
+                            name: namePrefix.charAt(0).toUpperCase() + namePrefix.slice(1) + " Workspace",
+                            domain: domain,
+                            region: "us-east-1",
+                            logo: namePrefix.charAt(0).toUpperCase()
+                          })
+                        }
+                      } else {
+                        setSelectedTenant({
+                          id: "rayn",
+                          name: "Rayn & Partners LLP",
+                          domain: "rayn.law",
+                          region: "us-east-1",
+                          logo: "R"
+                        })
+                      }
+                    }}
                     placeholder={`user@${selectedTenant?.domain || "firm.com"}`}
                     className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3.5 text-sm font-mono placeholder:text-white/15 outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500/30 transition-all"
                   />
@@ -358,15 +363,47 @@ export default function LoginPage() {
 
                 <button
                   type="submit"
-                  className="w-full bg-white text-[#030303] hover:bg-white/90 text-[10px] font-bold uppercase tracking-[0.2em] rounded-xl px-4 py-4 transition-all flex items-center justify-center gap-2 mt-2"
+                  className="w-full bg-white text-[#030303] hover:bg-white/90 text-[10px] font-bold uppercase tracking-[0.2em] rounded-xl px-4 py-4 transition-all flex items-center justify-center gap-2 mt-2 font-mono shadow-[0_0_20px_rgba(255,255,255,0.05)]"
                 >
                   Continue <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </form>
 
-              <div className="mt-6 flex items-center justify-between">
-                <button className="text-[10px] text-white/25 hover:text-emerald-400/70 uppercase tracking-widest font-mono transition-colors">Forgot Password?</button>
-                <button className="text-[10px] text-white/25 hover:text-emerald-400/70 uppercase tracking-widest font-mono transition-colors">Use Passkey</button>
+              <div className="mt-6 flex items-center justify-between border-b border-white/[0.04] pb-6">
+                <button type="button" className="text-[10px] text-white/25 hover:text-emerald-400/70 uppercase tracking-widest font-mono transition-colors">Forgot Password?</button>
+                <button type="button" className="text-[10px] text-white/25 hover:text-emerald-400/70 uppercase tracking-widest font-mono transition-colors">Use Passkey</button>
+              </div>
+
+              {/* SSO Option */}
+              <div className="relative my-6 animate-in fade-in duration-700">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/[0.06]" /></div>
+                <div className="relative flex justify-center text-[9px] uppercase tracking-[0.2em] font-mono">
+                  <span className="bg-[#030303] px-4 text-white/20">Or Continue with SSO</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 animate-in fade-in duration-700">
+                {[
+                  { name: "Microsoft", abbr: "MS" },
+                  { name: "Google", abbr: "G" },
+                  { name: "Okta", abbr: "OK" },
+                ].map(sso => (
+                  <button 
+                    type="button"
+                    key={sso.name}
+                    onClick={() => {
+                      setStep("authenticating")
+                      setIsLoading(true)
+                      setTimeout(() => {
+                        // SSO Auth login mock fallback
+                        login("partner@rayn.law", "EQUITY_PARTNER")
+                      }, 2200)
+                    }}
+                    className="flex items-center justify-center gap-2 py-3 rounded-xl border border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.03] hover:border-emerald-500/30 hover:text-emerald-400 transition-all text-[10px] font-bold uppercase tracking-widest text-white/40"
+                  >
+                    <span className="text-[10px] font-mono font-bold tracking-tight">{sso.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}

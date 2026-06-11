@@ -7,7 +7,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { FileUp, Sparkles, Loader2, ListChecks, CheckCircle2 } from "lucide-react"
-import { GoogleGenAI } from "@google/genai"
 import Markdown from 'react-markdown'
 
 export default function DocumentAnalysisPage() {
@@ -23,23 +22,24 @@ export default function DocumentAnalysisPage() {
     setResult(null)
 
     try {
-      if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
-        throw new Error("Gemini API key is not configured. Please add GEMINI_API_KEY in the environment secrets.")
-      }
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY })
-      
-      const prompt = `You are a highly capable AI Legal Assistant. 
-Analyze the following legal text. Please extract the key clauses, summarize the main points, and flag any potential risks or unusual liabilities. Format your output strictly in markdown, using headings, clear bullet points, and bold text for emphasis where appropriate. Maintain a professional, objective legal tone. \n\nDocument Text:\n${inputText}`
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
-        contents: prompt,
+      const res = await fetch("/api/documents/analyze", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: inputText }),
       })
 
-      if (response.text) {
-        setResult(response.text)
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to analyze document")
+      }
+
+      if (data.success && data.result) {
+        setResult(data.result)
       } else {
-        throw new Error("No response generated from the model.")
+        throw new Error(data.error || "Unsuccessful analysis call")
       }
     } catch (err: any) {
       console.error(err)

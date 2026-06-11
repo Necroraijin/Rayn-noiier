@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export default function RootLayout({children}: {children: React.ReactNode}) {
   return (
     <html lang="en" suppressHydrationWarning className={cn("font-sans", inter.variable, jetbrainsMono.variable, playfair.variable, "dark")}>
-      <body suppressHydrationWarning className="font-sans antialiased text-[#F0F0F0] bg-[#050505] overflow-hidden selection:bg-emerald-500/30">
+      <body suppressHydrationWarning className="font-sans antialiased text-[#F0F0F0] bg-[#050505] min-h-screen selection:bg-emerald-500/30">
         <ThemeProvider defaultTheme="dark" storageKey="rayn-theme">
           <AuthProvider>
             <TenantProvider>

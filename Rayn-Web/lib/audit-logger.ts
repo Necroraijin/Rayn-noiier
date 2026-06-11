@@ -59,15 +59,59 @@ class AuditLogger {
     this.counter = 8900 + seedEvents.length
   }
 
-  log(event: Omit<AuditEvent, "id" | "timestamp">) {
+  async log(event: Omit<AuditEvent, "id" | "timestamp">) {
+    const tempId = `EVT-temp-${Date.now()}`
+    const timestamp = new Date().toISOString()
     const newEvent: AuditEvent = {
       ...event,
-      id: `EVT-${++this.counter}`,
-      timestamp: new Date().toISOString(),
+      id: tempId,
+      timestamp,
     }
     this.events = [newEvent, ...this.events]
     this.notify()
+
+    try {
+      const res = await fetch("/api/audit/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(event),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.logId) {
+          this.events = this.events.map(e => e.id === tempId ? { ...e, id: data.logId } : e)
+          this.notify()
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync audit event to backend:", err)
+    }
     return newEvent
+  }
+
+  async syncLogs() {
+    try {
+      const res = await fetch("/api/audit/log")
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success && data.logs) {
+          this.events = data.logs.map((l: any) => ({
+            id: l.id,
+            timestamp: l.timestamp,
+            tenantId: l.tenantId,
+            category: l.category as any,
+            event: l.event,
+            actor: l.actor,
+            ip: l.ip,
+            severity: l.severity as any,
+            details: l.details || undefined,
+          }))
+          this.notify()
+        }
+      }
+    } catch (err) {
+      console.error("Failed to sync audit logs from server:", err)
+    }
   }
 
   getEvents(tenantId?: string): AuditEvent[] {
@@ -95,6 +139,9 @@ export function useAuditLog(tenantId?: string) {
   const [events, setEvents] = useState<AuditEvent[]>(() => auditLogger.getEvents(tenantId))
 
   useEffect(() => {
+    // Dynamically fetch log history from database on mount
+    auditLogger.syncLogs()
+
     const unsub = auditLogger.subscribe(() => {
       setEvents(auditLogger.getEvents(tenantId))
     })

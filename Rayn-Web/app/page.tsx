@@ -1,655 +1,260 @@
 "use client"
 
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { FileText, Clock, Users, Scale, ShieldAlert, Sparkles } from 'lucide-react';
-import { useAuth } from '@/lib/auth-context';
+import React, { useState } from "react"
+import Link from "next/link"
+import { Scale, Sparkles, Shield, Activity, ArrowRight, CheckCircle2, ChevronRight, FileText, Search, Lock, Globe } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
+import WavePlusSymbols from "@/components/wave-plus-symbols"
 
-export default function DashboardPage() {
-  const { role } = useAuth();
-  
-  if (role === "INTERN") {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="lg:col-span-8 flex flex-col">
-          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-            <div>
-              <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Trainee Dashboard</h1>
-              <p className="text-white/40 text-xs tracking-widest uppercase">Supervised Tasks & Mentorship</p>
-            </div>
-          </div>
-          
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 flex-1">
-             <h2 className="text-xs uppercase tracking-widest font-bold text-white/40 mb-6">Mentor Feed</h2>
-             <div className="space-y-4">
-                <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-sm text-emerald-400">Senior_Assoc_LJ</span>
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">Just Now</span>
-                  </div>
-                  <p className="text-xs text-white/80 leading-relaxed font-serif">&ldquo;Excellent work on the Smithson case briefing. You caught the nuance in the dissenting opinion. For your next task, try using the AI Drafting Co-pilot to prepare the initial settlement letter, but remember to strictly review the confidentiality clauses.&rdquo;</p>
-                </div>
-                <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="font-bold text-sm text-white/90">System Automated</span>
-                    <span className="text-[9px] font-mono uppercase tracking-widest text-white/30">2 Hours Ago</span>
-                  </div>
-                  <p className="text-xs text-white/50 leading-relaxed font-serif">The draft prepared for Matter #4029 has been returned with edits. Please review the tracked changes.</p>
-                </div>
-             </div>
-          </div>
-        </div>
+export default function LandingPage() {
+  const { role } = useAuth()
+  const [activeFeature, setActiveFeature] = useState("drafting")
 
-        <div className="lg:col-span-4 flex flex-col space-y-8">
-           <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 flex-1">
-             <h3 className="text-xs uppercase tracking-widest font-bold text-emerald-400 mb-4">Focus Tasks</h3>
-             <div className="space-y-4">
-               <div className="border-l-2 border-emerald-500/50 pl-3">
-                 <h4 className="text-xs font-bold text-white/90">Draft Settlement Letter</h4>
-                 <p className="text-[10px] font-mono text-white/50 uppercase tracking-widest mt-1">Due Today • Assigned by LJ</p>
-               </div>
-               <div className="border-l-2 border-white/20 pl-3">
-                 <h4 className="text-xs font-bold text-white/90">Review Disclosure Docs</h4>
-                 <p className="text-[10px] font-mono text-white/50 uppercase tracking-widest mt-1">Due Tomorrow</p>
-               </div>
-             </div>
-             <button className="w-full mt-6 text-[10px] font-bold uppercase tracking-widest border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 rounded px-4 py-2 transition-colors">
-               Go to Tasks
-             </button>
-           </div>
-        </div>
-      </div>
-    )
+  const features = {
+    drafting: {
+      title: "Neural Drafting Studio",
+      description: "Co-author formal legal briefs, pleadings, and agreements. Our AI drafting agent ensures strict clause structure, styling adherence, and firm-specific tone mapping.",
+      icon: FileText,
+      badge: "AI-Powered",
+      preview: `// ARBITER Neural Generation - Severability Clause
+"Section 12.8 Severability. If any provision of this Agreement is held to be invalid, illegal, or unenforceable in any jurisdiction, such provision shall be modified to the minimum extent necessary to make it valid and enforceable, and the remaining provisions of this Agreement shall remain in full force and effect."`,
+    },
+    research: {
+      title: "Multi-Agentic Legal RAG",
+      description: "Leverage dual vector stores. Cite global Indian statutes (BNS, Constitution, Supreme Court precedents) alongside your secure, private firm case files with mathematically verified row-level security.",
+      icon: Search,
+      badge: "Indian Jurisdiction",
+      preview: `// Retrieval Augmented Citation Check
+Precedent Found: Smith v. OmniCorp (2024)
+Court: Supreme Court of India
+Citation: 2024 SCC 1402
+Relevance: 94.2% match on unilateral termination restrictions.`,
+    },
+    audit: {
+      title: "Cryptographic Audit Ledger",
+      description: "Log every decryption, role update, and model run to an immutable audit ledger backed by DynamoDB. Keep your firm SOC 2 compliant automatically with zero-trust logging.",
+      icon: Activity,
+      badge: "Zero-Trust",
+      preview: `// Immutable Audit Event Logs
+[14:22:04] USER: admin@rayn.law | EVENT: KMS_KEY_ROTATION | SEVERITY: WARNING
+[14:21:55] USER: associate@rayn.law | EVENT: FILE_DOWNLOAD | SEVERITY: INFO
+[14:20:12] USER: SYSTEM | EVENT: SECURITY_INTEGRITY_CHECK | SEVERITY: SUCCESS`,
+    },
   }
-
-  if (role === "SUPER_ADMIN") {
-    const adminKpis = [
-      { title: 'Firm Revenue', value: '$2.4M', change: '+12% YTD', icon: Scale },
-      { title: 'AI Analysis Vol', value: '14.2k', change: '+3k This Mo', icon: FileText },
-      { title: 'Lawyer Utilization', value: '84%', change: '+4% vs Last', icon: Users },
-      { title: 'Firm Win Rate', value: '78%', change: '+2.4%', icon: Clock },
-    ];
-
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="lg:col-span-8 flex flex-col">
-          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-            <div>
-              <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Firm Overview</h1>
-              <p className="text-white/40 text-xs tracking-widest uppercase">System-wide Analytics & AI Insights</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-mono text-emerald-400">99.9%</div>
-              <div className="text-[9px] uppercase tracking-tighter opacity-40">System Uptime</div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
-            {adminKpis.map((kpi, index) => (
-              <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                   <div className="text-[10px] uppercase text-white/40 tracking-[0.2em]">{kpi.title}</div>
-                   <kpi.icon className="h-4 w-4 text-white/20" />
-                </div>
-                <div className="flex items-end justify-between">
-                  <div className="text-4xl font-mono">{kpi.value}</div>
-                  <div className="text-[10px] font-mono text-white/40 uppercase">{kpi.change}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 flex-1">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col">
-              <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4 text-emerald-400/80">Predictive Caseload Forecasting</div>
-              <div className="border-l-2 border-emerald-500/30 pl-4 py-2 mt-4">
-                <h3 className="text-sm font-medium mb-2 text-white/90">Resource Alert: Capacity Strain</h3>
-                <p className="text-xs text-white/50 leading-relaxed font-mono">
-                  Based on trailing 90-day intake velocity in the Corporate Litigation practice, AI models predict an 18% caseload increase by Q3. 
-                  <br/><br/>
-                  <span className="text-emerald-400">Recommendation:</span> Allocate 2 additional associates to Corporate.
-                </p>
-              </div>
-            </div>
-            
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col">
-              <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4 text-white/40">AI-Assisted Outcomes by Domain</div>
-              <div className="space-y-4 mt-2">
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>Corporate Litigation</span>
-                    <span className="text-emerald-400">82% Win Rate</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-emerald-400 w-[82%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>IP Prosecution</span>
-                    <span className="text-emerald-400/80">76% Win Rate</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-emerald-400/80 w-[76%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>Real Estate</span>
-                    <span className="text-emerald-400/60">64% Win Rate</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-emerald-400/60 w-[64%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>Family Law</span>
-                    <span className="text-yellow-400/80">45% Win Rate</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-yellow-400/80 w-[45%]" /></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 flex flex-col space-y-8">
-          <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col">
-             <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">Client Risk Scoring</h2>
-             <div className="space-y-6 flex-1">
-               <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl">
-                 <div className="flex justify-between items-start mb-2">
-                   <span className="font-bold text-sm text-red-50">Global Tech Inc.</span>
-                   <span className="font-mono text-xs text-red-400 uppercase tracking-widest">High Risk</span>
-                 </div>
-                 <p className="text-xs text-red-200/60 leading-relaxed">Recent string of adverse rulings and slower billing cycles flagged by ARBITER. Relationship review recommended.</p>
-               </div>
-               
-               <div className="bg-yellow-500/5 border border-yellow-500/10 p-4 rounded-xl">
-                 <div className="flex justify-between items-start mb-2">
-                   <span className="font-bold text-sm text-yellow-50">Estate of V. Richardson</span>
-                   <span className="font-mono text-xs text-yellow-400 uppercase tracking-widest">Med Risk</span>
-                 </div>
-                 <p className="text-xs text-yellow-200/60 leading-relaxed">Communication volume dropped 40% in last 30 days. Partner touchpoint suggested.</p>
-               </div>
-               
-               <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-                 <div className="flex justify-between items-start mb-2">
-                   <span className="font-bold text-sm text-white/80">OmniCorp</span>
-                   <span className="font-mono text-xs text-emerald-400 uppercase tracking-widest">Healthy</span>
-                 </div>
-                 <p className="text-xs text-white/40 leading-relaxed">Consistent billing and active engagement. AI modeling shows 90% retention likelihood.</p>
-               </div>
-             </div>
-          </section>
-
-          <div className="min-h-32 bg-emerald-950/30 border border-emerald-500/20 text-emerald-50 p-4 rounded-2xl flex flex-col justify-between">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Firm-Wide AI Report</span>
-              <div className="text-[9px] font-mono px-2 py-0.5 border border-emerald-500/30 rounded bg-emerald-500/10 text-emerald-400">Q3_AUTO_GEN</div>
-            </div>
-            <div className="text-[10px] uppercase opacity-70 leading-relaxed space-y-2">
-              <p>ARBITER adoption up 24% across standard practice areas.</p>
-              <p>Estimated hours saved: <span className="font-mono text-emerald-400">1,402 hrs</span></p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (role === "EQUITY_PARTNER" || role === "SALARIED_PARTNER") {
-    const partnerKpis = [
-      { title: 'My Book of Business', value: '$1.2M', change: '80% of Goal', icon: Scale },
-      { title: 'Personal Billable', value: '142h', change: '+12h This Mo', icon: Clock },
-      { title: 'Team Utilization', value: '92%', change: 'Optimum', icon: Users },
-      { title: 'Client Health Score', value: 'A-', change: 'Stable', icon: ShieldAlert },
-    ];
-
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="lg:col-span-8 flex flex-col">
-          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-            <div>
-              <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Partner Desk</h1>
-              <p className="text-white/40 text-xs tracking-widest uppercase">My Book of Business & Team Analytics</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-mono text-emerald-400">92%</div>
-              <div className="text-[9px] uppercase tracking-tighter opacity-40">Team Utilization</div>
-            </div>
-          </div>
-
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
-            {partnerKpis.map((kpi, index) => (
-              <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                   <div className="text-[10px] uppercase text-white/40 tracking-[0.2em]">{kpi.title}</div>
-                   <kpi.icon className="h-4 w-4 text-white/20" />
-                </div>
-                <div className="flex items-end justify-between">
-                  <div className="text-4xl font-mono">{kpi.value}</div>
-                  <div className="text-[10px] font-mono text-white/40 uppercase">{kpi.change}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 flex-1">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col">
-              <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4 text-emerald-400/80">Pending Sign-off Queue</div>
-              <div className="space-y-4 mt-2">
-                <div className="border-l-2 border-emerald-500/30 pl-4">
-                  <h3 className="text-sm font-medium mb-1 text-white/90">Motion for Summary Judgment</h3>
-                  <p className="text-[10px] text-white/50 leading-relaxed font-mono uppercase tracking-widest">Estate of M. Jane • Drafted by Associate_04</p>
-                </div>
-                <div className="border-l-2 border-white/20 pl-4 py-2 opacity-60">
-                  <h3 className="text-sm font-medium mb-1 text-white/90">Cease & Desist Notice</h3>
-                  <p className="text-[10px] text-white/50 leading-relaxed font-mono uppercase tracking-widest">Techstart Merger • AI Auto-Drafted</p>
-                </div>
-              </div>
-              <button className="mt-8 text-[10px] font-bold uppercase tracking-widest border border-white/20 text-white/70 hover:text-white hover:bg-white/10 rounded px-4 py-2 text-center">View Review Queue</button>
-            </div>
-            
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col">
-              <div className="text-[10px] uppercase tracking-[0.3em] font-bold mb-4 text-white/40">Team Workload Metrics</div>
-               <div className="space-y-4 mt-2">
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>Sarah L. (Sr. Assoc)</span>
-                    <span className="text-emerald-400">104% (Overbooked)</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-emerald-400 w-[100%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>Michael T. (Assoc)</span>
-                    <span className="text-emerald-400/80">88% (Optimal)</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-emerald-400/80 w-[88%]" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between text-[10px] font-mono uppercase mb-1">
-                    <span>David S. (Trainee)</span>
-                    <span className="text-yellow-400/80">45% (Capacity)</span>
-                  </div>
-                  <div className="w-full h-1 bg-white/10"><div className="h-full bg-yellow-400/80 w-[45%]" /></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 flex flex-col space-y-8">
-          <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col">
-             <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">My Client Portfolio Alerts</h2>
-             <div className="space-y-6 flex-1">
-               <div className="bg-yellow-500/5 border border-yellow-500/10 p-4 rounded-xl">
-                 <div className="flex justify-between items-start mb-2">
-                   <span className="font-bold text-sm text-yellow-50">Estate of V. Richardson</span>
-                   <span className="font-mono text-xs text-yellow-400 uppercase tracking-widest">Touchpoint Due</span>
-                 </div>
-                 <p className="text-xs text-yellow-200/60 leading-relaxed">It&apos;s been 14 days since the last client update. AI has drafted a status report for your review.</p>
-               </div>
-               
-               <div className="bg-white/5 border border-white/10 p-4 rounded-xl">
-                 <div className="flex justify-between items-start mb-2">
-                   <span className="font-bold text-sm text-white/80">OmniCorp</span>
-                   <span className="font-mono text-xs text-emerald-400 uppercase tracking-widest">Healthy</span>
-                 </div>
-                 <p className="text-xs text-white/40 leading-relaxed">Invoice PM-0294 paid. Litigation timeline on track.</p>
-               </div>
-             </div>
-          </section>
-
-          <div className="min-h-32 bg-emerald-950/30 border border-emerald-500/20 text-emerald-50 p-4 rounded-2xl flex flex-col justify-between">
-            <div className="flex justify-between items-start mb-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Strategy Room Quick-Launch</span>
-              <div className="text-[9px] font-mono px-2 py-0.5 border border-emerald-500/30 rounded bg-emerald-500/10 text-emerald-400">ARBITER v2</div>
-            </div>
-            <div className="text-[10px] uppercase opacity-70 leading-relaxed space-y-2 mb-4">
-              <p>Run opposing counsel profiling, or simulate settlement probabilities instantly.</p>
-            </div>
-            <button className="w-full bg-emerald-500 text-black font-bold uppercase tracking-widest text-[9px] py-3 rounded">Enter Strategy Room</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (role === "BILLING_ADMIN") {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="lg:col-span-8 flex flex-col">
-          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-            <div>
-              <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Finance & Billing</h1>
-              <p className="text-white/40 text-xs tracking-widest uppercase">Revenue Management & Forecasting</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-mono text-emerald-400">$840k</div>
-              <div className="text-[9px] uppercase tracking-tighter opacity-40">Month-to-Date Revenue</div>
-            </div>
-          </div>
-          
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-3 mb-8">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-               <div className="text-[10px] uppercase text-white/40 tracking-[0.2em] mb-4">WIP (Unbilled)</div>
-               <div className="text-3xl font-mono">$1.2M</div>
-               <div className="text-[10px] font-mono text-emerald-400 uppercase">+15% vs Last Mo</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-               <div className="text-[10px] uppercase text-white/40 tracking-[0.2em] mb-4">A/R (&gt; 30 Days)</div>
-               <div className="text-3xl font-mono">$420k</div>
-               <div className="text-[10px] font-mono text-red-400 uppercase">Action Required</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-               <div className="text-[10px] uppercase text-white/40 tracking-[0.2em] mb-4">Trust Account</div>
-               <div className="text-3xl font-mono">$3.8M</div>
-               <div className="text-[10px] font-mono text-white/40 uppercase">Fully Reconciled</div>
-            </div>
-          </div>
-          
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex-1">
-             <h3 className="text-xs uppercase tracking-[0.3em] font-bold mb-4 text-emerald-400">AI Billing Anomaly Detection</h3>
-             <div className="space-y-4">
-                <div className="border border-red-500/20 bg-red-500/5 p-4 rounded-lg flex justify-between items-center">
-                   <div>
-                     <h4 className="text-sm font-bold text-red-100">Unusual Hours Logged - Estate of M. Jane</h4>
-                     <p className="text-[10px] text-red-200/60 font-mono mt-1">Associate_02 logged 18 hours in a 24-hour period. Exceeds standard deviation.</p>
-                   </div>
-                   <button className="px-3 py-1.5 border border-red-500/40 text-red-400 text-[10px] uppercase tracking-widest font-bold rounded hover:bg-red-500/10 transition-colors">Flag for Review</button>
-                </div>
-                <div className="border border-white/10 bg-white/[0.02] p-4 rounded-lg flex justify-between items-center">
-                   <div>
-                     <h4 className="text-sm font-bold text-white/90">Task Mismatch - Draft Motion for SJ</h4>
-                     <p className="text-[10px] text-white/50 font-mono mt-1">Billed at partner rate ($850/hr). AI suggests this is typically an associate task.</p>
-                   </div>
-                   <button className="px-3 py-1.5 border border-white/20 text-white/80 text-[10px] uppercase tracking-widest font-bold rounded hover:bg-white/10 transition-colors">Apply Write-down</button>
-                </div>
-             </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 flex flex-col space-y-8">
-           <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6 flex-1">
-             <h3 className="text-xs uppercase tracking-widest font-bold text-emerald-400 mb-4">Revenue Forecasting</h3>
-             <p className="text-xs text-white/70 leading-relaxed mb-6">
-               Based on the active matter pipeline and historical settlement rates, ARBITER predicts Q4 revenue to be <strong>$4.2M</strong>.
-             </p>
-             <div className="h-32 mb-4 relative flex items-end">
-                {/* Mock Chart */}
-                <div className="w-full h-full border-b border-emerald-500/20 flex items-end justify-between px-2 pb-1 relative">
-                   <div className="w-1/5 h-[40%] bg-white/10 rounded-t"></div>
-                   <div className="w-1/5 h-[60%] bg-white/10 rounded-t"></div>
-                   <div className="w-1/5 h-[80%] bg-emerald-500/40 rounded-t"></div>
-                   <div className="w-1/5 h-[95%] bg-emerald-500/80 rounded-t relative">
-                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono text-emerald-400">$4.2M</span>
-                   </div>
-                </div>
-             </div>
-             <p className="text-[10px] font-mono text-emerald-400/60 uppercase tracking-widest text-center">Trailing 3 Quarters vs Q4 Projection</p>
-           </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (role === "GUEST_CLIENT") {
-    return (
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in">
-        <div className="lg:col-span-8 flex flex-col">
-          <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-            <div>
-              <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Client Portal</h1>
-              <p className="text-white/40 text-xs tracking-widest uppercase">Secure Communication & Matter Tracker</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-mono text-emerald-400">01</div>
-              <div className="text-[9px] uppercase tracking-tighter opacity-40">Active Matters</div>
-            </div>
-          </div>
-          
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 relative overflow-hidden">
-             <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-emerald-500/10 to-transparent"></div>
-             <h2 className="text-lg font-serif italic text-white/90 mb-4">Smith v. OmniCorp (Case #4029)</h2>
-             
-             <div className="space-y-6">
-                <div>
-                   <div className="flex justify-between text-[10px] font-mono uppercase mb-2 text-white/60">
-                     <span>Current Phase: Discovery</span>
-                     <span className="text-emerald-400">On Track</span>
-                   </div>
-                   <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                     <div className="h-full bg-emerald-400 w-[60%]" />
-                   </div>
-                </div>
-
-                <div className="bg-white/[0.02] border border-white/5 p-4 rounded-lg">
-                  <h3 className="text-[9px] font-bold uppercase tracking-widest text-emerald-500 mb-2 flex items-center gap-2">
-                    <Sparkles className="w-3 h-3" /> Matter Status Explainer
-                  </h3>
-                  <p className="text-sm font-serif text-white/80 leading-relaxed">
-                    Your case is currently in the &ldquo;Discovery&rdquo; phase. This means your legal team and the opposing counsel are exchanging evidence and documents relevant to the case. We are currently waiting for OmniCorp to produce the final batch of internal emails requested last month. No action is required from your side at this moment.
-                  </p>
-                </div>
-             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-               <h3 className="text-xs uppercase tracking-widest font-bold text-white/40 mb-4">Recent Documents</h3>
-               <div className="space-y-4">
-                 <div className="flex justify-between items-center group cursor-pointer">
-                   <div className="flex items-center gap-3">
-                     <FileText className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
-                     <div>
-                       <div className="text-sm text-white/90">Motion to Compel</div>
-                       <div className="text-[9px] font-mono text-white/40 uppercase">Filed by Your Team • 2 Days Ago</div>
-                     </div>
-                   </div>
-                 </div>
-                 <div className="flex justify-between items-center group cursor-pointer">
-                   <div className="flex items-center gap-3">
-                     <FileText className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
-                     <div>
-                       <div className="text-sm text-white/90">Defendant&apos;s Initial Disclosures</div>
-                       <div className="text-[9px] font-mono text-white/40 uppercase">Received • 1 Week Ago</div>
-                     </div>
-                   </div>
-                 </div>
-               </div>
-             </div>
-
-             <div className="bg-emerald-950/20 border border-emerald-500/20 rounded-2xl p-6">
-               <h3 className="text-xs uppercase tracking-widest font-bold text-emerald-400 mb-4">Next Steps Guide</h3>
-               <p className="text-xs text-white/70 leading-relaxed mb-4">
-                 Based on the upcoming arbitration hearing, your legal team needs you to review and sign the attached <strong>Affidavit of Facts</strong> before Friday.
-               </p>
-               <button className="w-full text-[10px] font-bold uppercase tracking-widest border border-emerald-500/40 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 rounded px-4 py-2 transition-colors">
-                 Review Affidavit
-               </button>
-             </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-4 flex flex-col space-y-8">
-           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex-1">
-             <h3 className="text-xs uppercase tracking-widest font-bold text-white/40 mb-4">Upcoming Hearings</h3>
-             <div className="space-y-4">
-               <div className="flex items-start">
-                 <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">17<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-                 <div className="pt-1">
-                   <div className="text-xs font-bold uppercase tracking-widest">Arbitration Hearing</div>
-                   <div className="text-[10px] text-white/50 tracking-wider">Room 4B, Central Court</div>
-                 </div>
-               </div>
-             </div>
-           </div>
-
-           <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 flex flex-col h-64">
-             <h3 className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-4 flex items-center gap-2">
-               FAQ Bot
-             </h3>
-             <div className="flex-1 overflow-y-auto space-y-4 text-xs pr-2">
-               <div className="bg-white/5 p-3 rounded-tr-lg rounded-bl-lg rounded-br-lg inline-block text-white/70 max-w-[85%]">
-                 What happens after discovery?
-               </div>
-               <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-tl-lg rounded-bl-lg rounded-br-lg inline-block text-blue-100/80 w-full">
-                 After discovery concludes, we evaluation the evidence. Either party may file a <strong>Motion for Summary Judgment</strong> to decide the case without a trial, or we prepare for pre-trial conferences.
-               </div>
-             </div>
-             <div className="mt-4 pt-4 border-t border-white/10">
-               <input type="text" placeholder="Ask a procedural question..." className="w-full bg-black/50 border border-white/10 rounded p-2 text-xs font-mono text-white/80 outline-none" />
-             </div>
-           </div>
-        </div>
-      </div>
-    );
-  }
-
-  const kpis = [
-    { title: 'Active Matters', value: '42', change: '+2', icon: Scale },
-    { title: 'Pending Review', value: '18', change: '-5', icon: FileText },
-    { title: 'Upcoming Deadlines', value: '07', change: 'Next 48h', icon: Clock },
-    { title: 'Active Clients', value: '154', change: '+12', icon: Users },
-  ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
-      <div className="lg:col-span-8 flex flex-col">
-        <div className="flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0 mb-8">
-          <div>
-            <h1 className="text-5xl font-light tracking-tighter mb-2 italic font-serif">Rayn Intelligence</h1>
-            <p className="text-white/40 text-xs tracking-widest uppercase">Analysis & Automated Summarization</p>
+    <div className="min-h-screen bg-[#030303] text-[#F0F0F0] font-sans selection:bg-emerald-500/30 overflow-x-hidden">
+      {/* Glow Effects */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[600px] right-0 w-[300px] h-[300px] bg-emerald-600/5 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-md border-b border-white/5 bg-[#030303]/70 px-6 lg:px-16 h-20 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center">
+            <span className="text-xl font-bold tracking-tighter text-emerald-400">R.</span>
           </div>
-          <div className="text-right">
-            <div className="text-3xl font-mono">04</div>
-            <div className="text-[9px] uppercase tracking-tighter opacity-40">Active Simulations</div>
+          <div>
+            <h2 className="text-md font-bold tracking-tight text-white">Rayn</h2>
+            <p className="text-[8px] uppercase tracking-[0.3em] text-emerald-400/60 font-mono">Legal Intelligence</p>
           </div>
         </div>
 
-        <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-8">
-          {kpis.map((kpi, index) => (
-            <div key={index} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                 <div className="text-[10px] uppercase text-white/40 tracking-[0.2em]">{kpi.title}</div>
-                 <kpi.icon className="h-4 w-4 text-white/20" />
+        <nav className="hidden md:flex items-center gap-8 text-[10px] uppercase font-bold tracking-widest text-white/50">
+          <Link href="/" className="text-white hover:text-white transition-colors">Platform</Link>
+          <a href="#features" className="hover:text-white transition-colors">Features</a>
+          <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+          <a href="#security" className="hover:text-white transition-colors">Security</a>
+        </nav>
+
+        <div className="flex items-center gap-4">
+          {role ? (
+            <Link 
+              href="/dashboard" 
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all"
+            >
+              Enter Console <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          ) : (
+            <>
+              <Link href="/login" className="text-[10px] uppercase tracking-widest font-bold text-white/60 hover:text-white transition-colors">
+                Sign In
+              </Link>
+              <Link 
+                href="/register" 
+                className="px-4 py-2 border border-white/20 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400 text-white text-[10px] font-bold uppercase tracking-widest rounded-lg transition-all"
+              >
+                Register Firm
+              </Link>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="px-6 lg:px-16 pt-20 pb-32 max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
+        {/* Wave pattern of green + symbols in the hero section */}
+        <WavePlusSymbols count={12} className="absolute top-[10%] left-0 right-0 h-32 opacity-25" />
+
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/15 bg-emerald-500/5 text-emerald-400 font-mono text-[9px] uppercase tracking-widest mb-8 animate-pulse relative z-10">
+          <Sparkles className="w-3 h-3" /> Standardizing Enterprise Legal AI
+        </div>
+
+        <h1 className="text-5xl md:text-7xl font-light tracking-tighter leading-[1.05] max-w-4xl font-serif italic text-white mb-8">
+          The Enterprise-Grade <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-200">Legal Intelligence Hub</span>
+        </h1>
+
+        <p className="text-sm md:text-md text-white/50 max-w-2xl leading-relaxed mb-12">
+          An isolated, multi-tenant B2B SaaS platform designed for modern law firms. Standardized on AWS Cognito, Amazon S3, RDS PostgreSQL, and AWS Bedrock to deliver fast, secure, and compliant legal operations.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 mb-20">
+          <Link 
+            href="/register" 
+            className="flex items-center justify-center gap-2 px-8 py-4 bg-white hover:bg-white/90 text-black text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all"
+          >
+            Provision Your Workspace <ChevronRight className="w-4 h-4" />
+          </Link>
+          <Link 
+            href="/pricing" 
+            className="flex items-center justify-center gap-2 px-8 py-4 border border-white/10 hover:border-white/20 hover:bg-white/5 text-white text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all"
+          >
+            Explore Tiers & Pricing
+          </Link>
+        </div>
+
+        {/* Hero Interactive Terminal Mockup */}
+        <div className="w-full max-w-4xl border border-white/10 rounded-2xl bg-black/60 backdrop-blur-md overflow-hidden shadow-2xl flex flex-col text-left">
+          <div className="h-12 border-b border-white/10 px-6 flex items-center justify-between bg-white/[0.02]">
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/40" />
+              <span className="ml-4 font-mono text-[10px] text-white/30 uppercase tracking-widest">Rayn Console // Case Smith v. OmniCorp</span>
+            </div>
+            <span className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-widest text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_#10b981]" /> secure_active
+            </span>
+          </div>
+          <div className="p-8 font-mono text-xs text-white/70 space-y-4 max-h-[300px] overflow-y-auto bg-black/40">
+            <p className="text-white/30">// Initiating Multi-Agent Precedent Extraction...</p>
+            <p className="text-emerald-400">✔ AWS Cognito session credentials resolved [Tenant ID: rayn-llp]</p>
+            <p className="text-emerald-400">✔ Multi-tenant schema path bound: schema tenant_rayn</p>
+            <p className="text-emerald-400">✔ Opposing brief read: Smithson_Complaint_unlocked.pdf (AES-256 decrypted)</p>
+            <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
+              <p className="text-white font-bold mb-2">ARBITER Analysis Critique Summary:</p>
+              <p className="text-white/60 leading-relaxed">
+                Found unilateral limitation of liability (Section 8.4) referencing deprecated statutory precedents. 
+                Recommendation: Draft cross-reference briefing utilizing Indian Supreme Court judgment SCC 1402 (2024) to void waiver clause.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="py-24 border-t border-white/5 bg-white/[0.01] relative z-10">
+        <div className="max-w-7xl mx-auto px-6 lg:px-16">
+          <div className="text-center max-w-xl mx-auto mb-16">
+            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-emerald-400 mb-4">Core Modules</h2>
+            <p className="text-3xl font-light font-serif italic text-white">Three specialized solutions, one centralized console.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            {/* Feature selector */}
+            <div className="lg:col-span-4 space-y-4">
+              {Object.entries(features).map(([key, f]) => {
+                const isSelected = activeFeature === key
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setActiveFeature(key)}
+                    className={`w-full text-left p-6 rounded-2xl border transition-all duration-300 ${
+                      isSelected
+                        ? "border-emerald-500/20 bg-emerald-500/5"
+                        : "border-white/5 bg-transparent hover:bg-white/[0.02]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <f.icon className={`w-5 h-5 ${isSelected ? "text-emerald-400" : "text-white/30"}`} />
+                      <span className="text-[10px] font-bold uppercase tracking-widest font-mono text-white/30">{f.badge}</span>
+                    </div>
+                    <h3 className="text-md font-serif italic text-white/95">{f.title}</h3>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Feature preview visual */}
+            <div className="lg:col-span-8">
+              <div className="border border-white/10 rounded-2xl p-8 bg-black/50 backdrop-blur-sm min-h-[300px] flex flex-col justify-between shadow-2xl">
+                <div>
+                  <h3 className="text-xl font-light font-serif italic text-white mb-4">
+                    {features[activeFeature as keyof typeof features].title}
+                  </h3>
+                  <p className="text-xs text-white/50 leading-relaxed mb-6">
+                    {features[activeFeature as keyof typeof features].description}
+                  </p>
+                </div>
+                <div className="p-5 rounded-xl border border-white/5 bg-black/60 font-mono text-[11px] text-white/60 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                  {features[activeFeature as keyof typeof features].preview}
+                </div>
               </div>
-              <div className="flex items-end justify-between">
-                <div className="text-4xl font-mono">{kpi.value}</div>
-                <div className="text-[10px] font-mono text-white/40 uppercase">{kpi.change}</div>
-              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Security Credentials */}
+      <section id="security" className="py-24 border-t border-white/5 max-w-7xl mx-auto px-6 lg:px-16 text-center">
+        <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-white/40 mb-4">Enterprise Compliance</h2>
+        <p className="text-3xl font-light font-serif italic text-white mb-12">Zero-Trust. Zero Key Exposures.</p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+          {[
+            { badge: "SOC 2 Type II", desc: "Security & Confidentiality" },
+            { badge: "ISO 27001", desc: "Information Security Management" },
+            { badge: "GDPR Compliance", desc: "Strict Data Portability" },
+            { badge: "HIPAA Compliant", desc: "Protected Client Records" },
+          ].map((cert, i) => (
+            <div key={i} className="bg-white/[0.02] border border-white/5 rounded-2xl p-6 flex flex-col items-center justify-center">
+              <Shield className="w-8 h-8 text-emerald-400/70 mb-3" />
+              <div className="text-xs font-bold uppercase tracking-widest text-white/80">{cert.badge}</div>
+              <div className="text-[9px] font-mono uppercase tracking-widest text-white/30 mt-1">{cert.desc}</div>
             </div>
           ))}
         </div>
 
-        <div className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-6 relative flex flex-col mb-8 lg:mb-0">
-          <div className="flex items-center justify-between mb-6">
-            <span className="text-[10px] uppercase tracking-[0.3em] font-bold py-1 px-3 border border-white/20 rounded-full">Neural Extraction Engine</span>
-            <div className="flex space-x-2 border border-white/10 px-2 py-1 bg-white/[0.02] rounded-full">
-              <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] my-auto"></div>
-              <span className="text-[9px] font-mono text-emerald-400">ONLINE</span>
-            </div>
-          </div>
-          
-          <div className="space-y-6 flex-1">
-            <div className="border-l-2 border-white/20 pl-4 py-2">
-              <h3 className="text-lg font-medium mb-1">Summation: Estate of V. Richardson</h3>
-              <p className="text-sm text-white/50 leading-relaxed max-w-lg">
-                Preliminary analysis indicates a 72% likelihood of motion for summary judgment success based on precedent case <span className="text-white underline decoration-white/30">Peterson v. Global Tech</span>. Discrepancies found in Section 4.2 of the opposing counsel&apos;s brief. Focus recommended on clause 8.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-lg">
-                <div className="text-[9px] uppercase text-white/30 mb-2">Risk Vector</div>
-                <div className="text-xl font-mono text-emerald-400">LOW</div>
-              </div>
-              <div className="bg-white/[0.02] border border-white/5 p-4 rounded-lg">
-                <div className="text-[9px] uppercase text-white/30 mb-2">Entities Flagged</div>
-                <div className="text-xl font-mono">18</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <div className="text-[10px] uppercase tracking-widest mb-4 opacity-40">Suggested Queries</div>
-            <div className="flex flex-wrap gap-2">
-              <button className="px-3 py-2 bg-white text-black text-[10px] font-bold uppercase rounded hover:bg-white/90 transition">Draft Summary</button>
-              <button className="px-3 py-2 border border-white/20 text-white/80 hover:text-white text-[10px] font-bold uppercase rounded hover:bg-white/5 transition">Cross Reference Precedent</button>
-              <button className="px-3 py-2 border border-white/20 text-white/80 hover:text-white text-[10px] font-bold uppercase rounded hover:bg-white/5 transition">Extract Liability Clauses</button>
-            </div>
-          </div>
+        <div className="flex items-center justify-center gap-8 text-[10px] text-white/30 uppercase tracking-widest font-mono flex-wrap">
+          <span className="flex items-center gap-1.5"><Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 KMS Key Rotation</span>
+          <span className="flex items-center gap-1.5"><Globe className="w-3.5 h-3.5 text-emerald-400" /> Isolated Schema Per Firm</span>
+          <span className="flex items-center gap-1.5"><Activity className="w-3.5 h-3.5 text-emerald-400" /> Real-time DynamoDB Logging</span>
         </div>
-      </div>
+      </section>
 
-      <div className="lg:col-span-4 flex flex-col space-y-8">
-        <section className="flex-1 border border-white/10 rounded-2xl p-6 bg-white/[0.02]">
-          <h2 className="text-xs uppercase tracking-[0.3em] font-bold mb-6 text-white/40">Case Progress</h2>
-          <div className="space-y-6">
-            <div className="relative">
-              <div className="flex justify-between text-[11px] mb-2 font-mono text-white/80">
-                <span>SMITH V. OMNICORP</span>
-                <span className="text-white">85%</span>
-              </div>
-              <div className="w-full h-[2px] bg-white/10 overflow-hidden">
-                <div className="w-[85%] h-full bg-white"></div>
-              </div>
-            </div>
-            <div className="relative">
-              <div className="flex justify-between text-[11px] mb-2 font-mono text-white/80">
-                <span>ESTATE OF M. JANE</span>
-                <span className="text-white">32%</span>
-              </div>
-              <div className="w-full h-[2px] bg-white/10 overflow-hidden">
-                <div className="w-[32%] h-full bg-white/40"></div>
-              </div>
-            </div>
-             <div className="relative">
-              <div className="flex justify-between text-[11px] mb-2 font-mono text-white/80">
-                <span>TECHSTART MERGER</span>
-                <span className="text-white">65%</span>
-              </div>
-              <div className="w-full h-[2px] bg-white/10 overflow-hidden">
-                <div className="w-[65%] h-full bg-white/40"></div>
-              </div>
-            </div>
-          </div>
-
-          <h2 className="text-xs uppercase tracking-[0.3em] font-bold mt-12 mb-6 text-white/40">Deadlines</h2>
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">14<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-              <div className="pt-1">
-                <div className="text-xs font-bold uppercase tracking-widest">Discovery Deadline</div>
-                <div className="text-[10px] text-white/50 tracking-wider">Rayn vs. Apex Corp</div>
-              </div>
-            </div>
-            <div className="flex items-start opacity-50 hover:opacity-100 transition-opacity">
-              <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">17<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-              <div className="pt-1">
-                <div className="text-xs font-bold uppercase tracking-widest">Arbitration Hearing</div>
-                <div className="text-[10px] text-white/50 tracking-wider">Client: Smithson</div>
-              </div>
-            </div>
-             <div className="flex items-start opacity-50 hover:opacity-100 transition-opacity">
-              <div className="text-xl font-mono mr-4 border-r border-white/10 pr-4">22<br/><span className="text-[9px] text-white/30 uppercase tracking-widest font-sans">Oct</span></div>
-              <div className="pt-1">
-                <div className="text-xs font-bold uppercase tracking-widest">File Motion for SJ</div>
-                <div className="text-[10px] text-white/50 tracking-wider">Estate of V. Richardson</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <div className="min-h-32 bg-white text-black p-4 rounded-2xl flex flex-col justify-between">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[10px] font-black uppercase tracking-widest">Audit Session Log</span>
-            <div className="text-[9px] font-mono px-2 py-0.5 border border-black/20 rounded bg-black/5">SECURE_ACTIVE</div>
-          </div>
-          <div className="text-[10px] font-mono uppercase opacity-60 leading-tight space-y-1">
-            <p>14:22:04 User root updated permissions for Associate_04</p>
-            <p>14:21:55 Document 1024-B decrypted for analysis</p>
-            <p className="opacity-50">14:20:12 Session refreshed by token 0x9A...</p>
-          </div>
+      {/* CTA Footer banner */}
+      <section className="py-24 border-t border-white/5 bg-gradient-to-b from-transparent to-emerald-950/10 text-center px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl md:text-5xl font-light tracking-tighter leading-tight font-serif italic text-white mb-6">
+            Empower Your Partners and Associates Today
+          </h2>
+          <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-10 font-mono">
+            Setup takes less than 10 minutes. Fully compliant with AWS IAM.
+          </p>
+          <Link 
+            href="/register" 
+            className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-black text-[11px] font-bold uppercase tracking-widest rounded-xl transition-all"
+          >
+            Register Enterprise Firm <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
-      </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-12 px-6 lg:px-16 text-center text-white/20 text-[10px] font-mono uppercase tracking-widest bg-black">
+        <p>© 2026 Rayn Intelligence Systems LLC. All rights reserved. SOC 2 Certified. Powered by AWS.</p>
+      </footer>
     </div>
-  );
+  )
 }
