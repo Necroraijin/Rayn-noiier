@@ -1,5 +1,79 @@
-import { ChatBedrockConverse } from "@langchain/aws"
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
+
+class ChatBedrockConverse {
+  private client: BedrockRuntimeClient;
+  private modelId: string;
+  private temperature: number;
+
+  constructor(options: { model: string; region: string; temperature: number }) {
+    const { model, region, temperature } = options;
+    this.client = new BedrockRuntimeClient({ region });
+    this.modelId = model;
+    this.temperature = temperature;
+  }
+
+  async invoke(messages: Array<SystemMessage | HumanMessage>) {
+    const prompt = messages
+      .map((message) => {
+        const role = message instanceof SystemMessage ? "SYSTEM" : "USER";
+        const content = typeof (message as any).text === "string"
+          ? (message as any).text
+          : typeof (message as any).content === "string"
+          ? (message as any).content
+          : "";
+        return `${role}: ${content}`;
+      })
+      .join("\n\n");
+
+    const command = new InvokeModelCommand({
+      modelId: this.modelId,
+      body: JSON.stringify({
+        input: prompt,
+        temperature: this.temperature,
+      }),
+      contentType: "application/json",
+    });
+
+    const response = await this.client.send(command);
+    const bodyString = await this.readStream(response.body);
+    return { content: bodyString };
+  }
+
+  private async readStream(body: unknown): Promise<string> {
+    if (!body) return "";
+    if (typeof body === "string") return body;
+    if (body instanceof Uint8Array) return new TextDecoder().decode(body);
+    if (typeof (body as any).getReader === "function") {
+      const reader = (body as any).getReader();
+      let result = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        result += new TextDecoder().decode(value);
+      }
+      return result;
+    }
+    if (typeof (body as any).on === "function") {
+      return new Promise((resolve, reject) => {
+        let data = "";
+        (body as any)
+          .on("data", (chunk: Buffer | string) => {
+            data += typeof chunk === "string" ? chunk : chunk.toString();
+          })
+          .on("end", () => resolve(data))
+          .on("error", reject);
+      });
+    }
+    if (typeof (body as any).text === "function") {
+      return await (body as any).text();
+    }
+    return String(body);
+  }
+}
 
 const model = new ChatBedrockConverse({
   model: "anthropic.claude-3-5-sonnet-20240620-v1:0",

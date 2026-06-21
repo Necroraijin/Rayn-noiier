@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { PrismaClient } from "@prisma/client"
-import { ChatBedrockConverse } from "@langchain/aws"
+import {
+  BedrockRuntimeClient,
+  InvokeModelCommand,
+} from "@aws-sdk/client-bedrock-runtime";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
 
 const prisma = new PrismaClient()
@@ -48,18 +51,42 @@ Analyze the following legal text. Please extract the key clauses, summarize the 
 
     if (hasAwsCreds) {
       try {
-        const model = new ChatBedrockConverse({
-          model: "anthropic.claude-3-5-sonnet-20240620-v1:0",
-          region: process.env.AWS_REGION || "us-east-1",
-          temperature: 0.2,
+        const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "ap-south-1" })
+
+        const payload = {
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: text },
+          ],
+        }
+
+        const command = new InvokeModelCommand({
+          modelId: "anthropic.claude-3-5-sonnet-20240620-v1",
+          contentType: "application/json",
+          accept: "application/json",
+          body: JSON.stringify(payload),
         })
 
-        const response = await model.invoke([
-          new SystemMessage(systemPrompt),
-          new HumanMessage(text),
-        ])
+        const resp = await client.send(command)
 
-        resultText = typeof response.content === "string" ? response.content : JSON.stringify(response.content)
+        // Try to extract response body text; fall back to stringifying the response
+        let bodyText = ""
+        try {
+          // In some environments resp.Body has transformToString
+          if ((resp as any).body && typeof (resp as any).body.transformToString === "function") {
+            bodyText = await (resp as any).body.transformToString()
+          } else if ((resp as any).body instanceof Uint8Array) {
+            bodyText = new TextDecoder().decode((resp as any).body)
+          } else if (typeof (resp as any).body === "string") {
+            bodyText = (resp as any).body
+          } else {
+            bodyText = JSON.stringify(resp)
+          }
+        } catch (e) {
+          bodyText = JSON.stringify(resp)
+        }
+
+        resultText = bodyText
       } catch (bedrockError: any) {
         console.warn("AWS Bedrock execution failed, falling back to simulated analysis:", bedrockError)
         resultText = generateMockAnalysis(text)
