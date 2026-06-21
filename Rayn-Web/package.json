@@ -16,7 +16,6 @@
     "@aws-sdk/s3-request-presigner": "^3.600.0",
     "@base-ui/react": "^1.4.1",
     "@hookform/resolvers": "^5.2.1",
-    "@langchain/aws": "^0.1.0",
     "@langchain/core": "^1.1.48",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-visually-hidden": "^1.2.4",
