@@ -1,8 +1,6 @@
-import { PrismaClient } from "@prisma/client"
+import { prisma, getTenantDb } from "../db"
 import { bedrockClient } from "../aws"
 import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime"
-
-const prisma = new PrismaClient()
 
 export async function getBedrockEmbedding(text: string): Promise<number[]> {
   try {
@@ -33,10 +31,11 @@ export async function getBedrockEmbedding(text: string): Promise<number[]> {
 export async function searchPrivateDocuments(tenantId: string, caseId: string | null, query: string, limit = 5) {
   const embedding = await getBedrockEmbedding(query)
   const vectorStr = `[${embedding.join(",")}]`
+  const db = getTenantDb(tenantId)
   
   try {
     // Cosine similarity search using <=> pgvector operator
-    const results = await prisma.$queryRawUnsafe<any[]>(
+    const results = await db.$queryRawUnsafe<any[]>(
       `SELECT id, name, "s3Key", url, type, "uploadedBy",
               (embedding <=> CAST($1 AS vector)) as distance
        FROM "Document"
@@ -58,7 +57,7 @@ export async function searchPrivateDocuments(tenantId: string, caseId: string | 
     }))
   } catch (err) {
     console.error("Prisma vector search failed. Falling back to title matching.", err)
-    const fallbackDocs = await prisma.document.findMany({
+    const fallbackDocs = await db.document.findMany({
       where: {
         tenantId,
         ...(caseId ? { caseId } : {}),

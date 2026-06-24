@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "../db"
 import { getBedrockEmbedding } from "./vector-store"
 import { bedrockClient } from "../aws"
 import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime"
-
-const prisma = new PrismaClient()
 
 export async function learnWritingStyle(
   tenantId: string,

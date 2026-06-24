@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
+import { prisma, getTenantDb } from "@/lib/db"
 import { searchPrivateDocuments, searchGlobalPrecedents } from "@/lib/ai/vector-store"
 import { runResearchAgent, runDraftingAgent, runReviewAgent } from "@/lib/ai/legal-agents"
-
-const prisma = new PrismaClient()
+import { applyGuardrails } from "@/lib/ai/guardrails"
 
 export async function POST(req: Request) {
   try {
@@ -16,12 +15,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required parameter: query" }, { status: 400 })
     }
 
+    // ── AI SECURITY & COMPLIANCE GUARDRAILS ─────────────────────────────
+    const guardrailResult = await applyGuardrails(query)
+    if (guardrailResult.blocked) {
+      return NextResponse.json({
+        error: `Security Policy Violation: Request blocked by safety filter. Reason: ${guardrailResult.blockedReason}`
+      }, { status: 400 })
+    }
+    const sanitizedQuery = guardrailResult.sanitizedText
+
     // ── SAAS PLAN & CONTEXT GATING ──────────────────────────────────────
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId }
     })
 
-    const inputTokens = Math.ceil(query.length / 4)
+    const inputTokens = Math.ceil(sanitizedQuery.length / 4)
 
     if (tenant) {
       // 1. Context Size limit gate
@@ -40,24 +48,24 @@ export async function POST(req: Request) {
     }
 
     // ── STEP 1: Retrieval (Agentic RAG context) ────────────────────────
-    const privateDocs = await searchPrivateDocuments(tenantId, caseId || null, query, 3)
+    const privateDocs = await searchPrivateDocuments(tenantId, caseId || null, sanitizedQuery, 3)
     const privateContext = privateDocs
       .map(doc => `[File: ${doc.name}] Context: ${doc.url} (Relevance Distance: ${doc.distance.toFixed(4)})`)
       .join("\n\n")
 
-    const globalPrecedents = await searchGlobalPrecedents(query, 3)
+    const globalPrecedents = await searchGlobalPrecedents(sanitizedQuery, 3)
     const globalContext = globalPrecedents
       .map(prec => `[Precedent: ${prec.title} (${prec.year})] Citation: ${prec.citation} (${prec.court})\nSummary: ${prec.summary}`)
       .join("\n\n")
 
     // ── STEP 2: Research Agent ──────────────────────────────────────────
-    const researchNotes = await runResearchAgent(query, privateContext, globalContext)
+    const researchNotes = await runResearchAgent(sanitizedQuery, privateContext, globalContext)
 
     // ── STEP 3: Drafting Agent ──────────────────────────────────────────
-    const draftedText = await runDraftingAgent(query, researchNotes)
+    const draftedText = await runDraftingAgent(sanitizedQuery, researchNotes)
 
     // ── STEP 4: Review / Compliance Agent ──────────────────────────────
-    const complianceCritique = await runReviewAgent(draftedText, query)
+    const complianceCritique = await runReviewAgent(draftedText, sanitizedQuery)
 
     // ── INCREMENT USAGE ──────────────────────────────────────────────────
     if (tenant) {

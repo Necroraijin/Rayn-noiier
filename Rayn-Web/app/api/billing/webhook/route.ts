@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import Stripe from "stripe"
-
-const prisma = new PrismaClient()
 
 const stripeSecret = process.env.STRIPE_SECRET_KEY || ""
 const stripe = stripeSecret ? new Stripe(stripeSecret, { apiVersion: "2025-01-27.acacia" as any }) : null

@@ -1,0 +1,313 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Rayn SaaS Stack - Global Multi-Region Serverless Infrastructure for AWS + Vercel Hackathon'
+
+Parameters:
+  DBMasterUsername:
+    Type: String
+    Default: 'raynadmin'
+    Description: 'Master database username'
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    Default: 'RaynSecurePass2026!'
+    Description: 'Master database password (min 8 characters, alphanumeric)'
+  PrimaryRegion:
+    Type: String
+    Default: 'us-east-1'
+    Description: 'AWS Region for primary resources'
+  DBEngineVersion:
+    Type: String
+    Default: '16.2'
+    AllowedValues:
+      - '16.2'
+      - '15.4'
+      - '15.3'
+      - '14.9'
+    Description: 'Aurora PostgreSQL Engine Version'
+
+
+Resources:
+  # ─── VPC NETWORKING (For Aurora DB) ──────────────────────────────────
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '10.0.0.0/16'
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: 'rayn-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: 'rayn-igw'
+
+  VpcGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  SubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: '10.0.1.0/24'
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: 'rayn-subnet-a'
+
+  SubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: '10.0.2.0/24'
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: 'rayn-subnet-b'
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - Key: Name
+          Value: 'rayn-route-table'
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VpcGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetA
+      RouteTableId: !Ref RouteTable
+
+  SubnetRouteTableAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref SubnetB
+      RouteTableId: !Ref RouteTable
+
+  # ─── SECURITY GROUPS (Allows Vercel public access to DB) ──────────────
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Allow PostgreSQL access from everywhere for Vercel Serverless'
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: '0.0.0.0/0' # Open for hackathon simplicity; Vercel serverless IPs are dynamic.
+      Tags:
+        - Key: Name
+          Value: 'rayn-db-sg'
+
+  # ─── AMAZON AURORA SERVERLESS V2 DATABASE ─────────────────────────────
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'Subnets for Aurora Serverless DB'
+      SubnetIds:
+        - !Ref SubnetA
+        - !Ref SubnetB
+
+  AuroraDBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: 'aurora-postgresql'
+      EngineVersion: !Ref DBEngineVersion
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref DatabaseSecurityGroup
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: 0.5
+        MaxCapacity: 2.0
+      Tags:
+        - Key: Name
+          Value: 'rayn-aurora-cluster'
+
+  AuroraDBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref AuroraDBCluster
+      DBInstanceClass: 'db.serverless'
+      Engine: 'aurora-postgresql'
+      PubliclyAccessible: true
+      Tags:
+        - Key: Name
+          Value: 'rayn-db-instance'
+
+  # ─── AMAZON S3 BUCKET (Document Storage) ──────────────────────────────
+  S3DocumentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'rayn-legal-docs-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: 'AES256'
+
+  # ─── AMAZON DYNAMODB (Audit Logs default table) ───────────────────────
+  DynamoDBAuditTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: 'rayn-audit-rayn'
+      AttributeDefinitions:
+        - AttributeName: 'tenantId'
+          AttributeType: 'S'
+        - AttributeName: 'timestamp'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'tenantId'
+          KeyType: 'HASH'
+        - AttributeName: 'timestamp'
+          KeyType: 'RANGE'
+      BillingMode: 'PAY_PER_REQUEST'
+
+  # ─── AWS COGNITO (Identity Management) ───────────────────────────────
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: 'RaynUserPool'
+      UsernameAttributes:
+        - 'email'
+      AutoVerifiedAttributes:
+        - 'email'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+      Schema:
+        - Name: 'role'
+          AttributeDataType: 'String'
+          Mutable: true
+          Required: false
+        - Name: 'tenantId'
+          AttributeDataType: 'String'
+          Mutable: true
+          Required: false
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: 'RaynNextAuthClient'
+      UserPoolId: !Ref CognitoUserPool
+      GenerateSecret: true
+      ExplicitAuthFlows:
+        - 'ALLOW_USER_PASSWORD_AUTH'
+        - 'ALLOW_REFRESH_TOKEN_AUTH'
+      SupportedIdentityProviders:
+        - 'COGNITO'
+
+  # ─── IAM USER & POLICY (For Vercel Connection) ────────────────────────
+  VercelIAMUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: 'rayn-vercel-integration-user'
+
+  VercelIAMPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: 'RaynVercelIntegrationPolicy'
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # S3 access
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:DeleteObject'
+              - 's3:ListBucket'
+            Resource:
+              - !Sub 'arn:aws:s3:::${S3DocumentBucket}'
+              - !Sub 'arn:aws:s3:::${S3DocumentBucket}/*'
+          # DynamoDB access
+          - Effect: Allow
+            Action:
+              - 'dynamodb:PutItem'
+              - 'dynamodb:GetItem'
+              - 'dynamodb:Scan'
+              - 'dynamodb:Query'
+              - 'dynamodb:CreateTable'
+              - 'dynamodb:DescribeTable'
+            Resource:
+              - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/rayn-audit-*'
+          # Bedrock AI Access
+          - Effect: Allow
+            Action:
+              - 'bedrock:InvokeModel'
+              - 'bedrock:InvokeModelWithResponseStream'
+            Resource: '*'
+          # Cognito identity verification
+          - Effect: Allow
+            Action:
+              - 'cognito-idp:AdminGetUser'
+              - 'cognito-idp:AdminCreateUser'
+              - 'cognito-idp:AdminUpdateUserAttributes'
+            Resource:
+              - !GetAtt CognitoUserPool.Arn
+      Users:
+        - !Ref VercelIAMUser
+
+  VercelIAMAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref VercelIAMUser
+
+Outputs:
+  AwsRegion:
+    Value: !Ref AWS::Region
+    Description: 'AWS Region to input in env'
+
+  AwsAccessKeyId:
+    Value: !Ref VercelIAMAccessKey
+    Description: 'AWS Access Key ID for Vercel'
+
+  AwsSecretAccessKey:
+    Value: !GetAtt VercelIAMAccessKey.SecretAccessKey
+    Description: 'AWS Secret Access Key for Vercel (Keep Secure!)'
+
+  CognitoClientId:
+    Value: !Ref CognitoUserPoolClient
+    Description: 'OIDC Provider Cognito Client ID'
+
+  CognitoClientSecret:
+    Value: !GetAtt CognitoUserPoolClient.ClientSecret
+    Description: 'OIDC Provider Cognito Client Secret'
+
+  CognitoIssuer:
+    Value: !Sub 'https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}'
+    Description: 'OIDC Cognito OpenID Connect Issuer URL'
+
+  AwsS3Bucket:
+    Value: !Ref S3DocumentBucket
+    Description: 'Amazon S3 Bucket name for legal document uploads'
+
+  DatabaseUrl:
+    Value: !Sub 'postgresql://${DBMasterUsername}:${DBMasterPassword}@${AuroraDBCluster.Endpoint}:5432/postgres?schema=public'
+    Description: 'Amazon Aurora PostgreSQL Connection String'

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import { dynamoClient } from "@/lib/aws"
 import { PutItemCommand } from "@aws-sdk/client-dynamodb"
-
-const prisma = new PrismaClient()
 
 export async function GET() {
   try {

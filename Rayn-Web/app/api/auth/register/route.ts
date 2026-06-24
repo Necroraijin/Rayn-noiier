@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { prisma } from "@/lib/db"
+import { dynamoClient } from "@/lib/aws"
+import { CreateTableCommand } from "@aws-sdk/client-dynamodb"
 
 export async function POST(req: Request) {
   try {
@@ -108,11 +108,40 @@ export async function POST(req: Request) {
       return { tenant, user }
     })
 
+    // ─── 4. DYNAMIC AWS DYNAMODB PROVISIONING ────────────────────────────
+    const hasAwsCreds = !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
+    let dynamodbSaved = false
+
+    if (hasAwsCreds) {
+      try {
+        const tableName = `rayn-audit-${tenantId}`
+        const command = new CreateTableCommand({
+          TableName: tableName,
+          AttributeDefinitions: [
+            { AttributeName: "tenantId", AttributeType: "S" },
+            { AttributeName: "timestamp", AttributeType: "S" }
+          ],
+          KeySchema: [
+            { AttributeName: "tenantId", KeyType: "HASH" },
+            { AttributeName: "timestamp", KeyType: "RANGE" }
+          ],
+          BillingMode: "PAY_PER_REQUEST"
+        })
+
+        await dynamoClient.send(command)
+        dynamodbSaved = true
+        console.log(`Dynamically created DynamoDB table: ${tableName}`)
+      } catch (dynamoError: any) {
+        console.warn("Failed to dynamically provision DynamoDB table on signup:", dynamoError.message)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       tenantId: result.tenant.id,
       email: result.user.email,
       role: result.user.role,
+      dynamodbSaved,
     })
   } catch (error: any) {
     console.error("Workspace registration error:", error)

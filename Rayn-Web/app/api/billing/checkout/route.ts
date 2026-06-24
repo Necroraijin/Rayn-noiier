@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import Stripe from "stripe"
-
-const prisma = new PrismaClient()
 
 // Initialize Stripe with the secret key from environment
 const stripeSecret = process.env.STRIPE_SECRET_KEY || ""

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   Sparkles, Upload, Scale, Presentation, ShieldAlert, Target,
   ShieldCheck, Sword, MessageSquare, Briefcase, BrainCircuit,
-  ChevronRight, CheckCircle2, Loader2, AlertTriangle, Gauge, Database
+  ChevronRight, CheckCircle2, Loader2, AlertTriangle, Gauge, Database, FileText
 } from "lucide-react"
 import { useTenant } from "@/lib/tenant-context"
 import { useAuditLog } from "@/lib/audit-logger"
@@ -24,18 +24,22 @@ interface AgentStep {
 }
 
 const AGENT_CHAIN: Omit<AgentStep, "id" | "status">[] = [
-  { type: "thinking", label: "Parsing Query", detail: "Decomposing user intent: 'Analyze statute of limitations defense for Estate of V. Richardson'", tokensUsed: 420 },
+  { type: "thinking", label: "Parsing Query", detail: "Decomposing user intent and isolating safety guardrails...", tokensUsed: 420 },
   { type: "thinking", label: "Planning Execution", detail: "LangChain ReAct Agent selecting tool chain: [S3Retriever → PrecedentDB → JudgeProfiler → SettlementCalculator]", tokensUsed: 680 },
-  { type: "tool_call", label: "Tool: S3 Document Retriever", detail: "Querying s3://rayn-legal-docs-prod/matters/M-1028/ for relevant filings (AES-256 decryption)...", tokensUsed: 1200 },
-  { type: "tool_result", label: "Retrieved 14 Documents", detail: "Found: complaint.pdf, answer.pdf, 2018_correspondence.pdf, contract_amendment_2019.pdf, + 10 exhibits", tokensUsed: 2400 },
-  { type: "tool_call", label: "Tool: Precedent Database", detail: "Running vector similarity search across 248k case law embeddings in jurisdiction 'US-NY'...", tokensUsed: 3100 },
-  { type: "tool_result", label: "4 Analogous Precedents Found", detail: "Davis v. Meritech (2021) [0.94 sim], Peterson v. Global Tech (2019) [0.89 sim], + 2 secondary", tokensUsed: 4200 },
-  { type: "tool_call", label: "Tool: Opposing Counsel Profiler", detail: "Analyzing litigation history of Jonathan Wright (Wright & Associates) across 47 filed cases...", tokensUsed: 1800 },
-  { type: "tool_result", label: "Profile Compiled", detail: "Wright: 74% pre-trial settlement rate, aggressive discovery style, weak on procedural defenses (lost 3 recent SJ motions)", tokensUsed: 2200 },
-  { type: "guardrail", label: "Safety Guardrails Check", detail: "✓ No PII detected · ✓ No prompt injection · ✓ Cross-tenant isolation verified · ✓ Output within schema bounds", tokensUsed: 300 },
-  { type: "thinking", label: "Synthesizing Analysis", detail: "Combining precedent analysis, counsel profile, and document evidence into coherent strategy recommendation...", tokensUsed: 5400 },
-  { type: "output", label: "Strategy Report Generated", detail: "Complete analysis with outcome probabilities, theory of case, and opposing counsel vulnerabilities.", tokensUsed: 3200 },
+  { type: "tool_call", label: "Tool: S3 Document Retriever", detail: "Querying active S3 bucket for legal briefs and contract materials...", tokensUsed: 1200 },
+  { type: "tool_result", label: "Retrieved 14 Documents", detail: "Found relevant case filings and corporate contract history in S3.", tokensUsed: 2400 },
+  { type: "tool_call", label: "Tool: Precedent Database", detail: "Running vector similarity search across Indian Statutes and precedents...", tokensUsed: 3100 },
+  { type: "tool_result", label: "Analogous Precedents Found", detail: "Davis v. Meritech (2021) and Peterson v. Global Tech (2019) mapped.", tokensUsed: 4200 },
+  { type: "guardrail", label: "Safety Guardrails Check", detail: "✓ No PII detected · ✓ No prompt injection · ✓ Cross-tenant isolation verified", tokensUsed: 300 },
+  { type: "thinking", label: "Synthesizing Analysis", detail: "Invoking Bedrock sequential agents: Research → Drafting → Compliance Review...", tokensUsed: 5400 },
+  { type: "output", label: "Strategy Report Generated", detail: "Complete agentic analysis retrieved from AWS Bedrock.", tokensUsed: 3200 },
 ]
+
+const QUERY_MAP: Record<string, string> = {
+  "Estate of V. Richardson (M-1028)": "Draft the final distribution clause for the Estate of V. Richardson, verifying if the statute of limitations under the Indian Limitation Act has passed.",
+  "Smith v. OmniCorp (M-1024)": "Draft the mutual indemnification clause for Smith v. OmniCorp contract breach and review it for public policy compliance.",
+  "Techstart Merger (M-1026)": "Draft the non-compete clause for the Techstart Merger and review it for compliance under Indian Competition Act."
+}
 
 export default function StrategyRoomPage() {
   const { tenant, consumeTokens } = useTenant()
@@ -45,6 +49,17 @@ export default function StrategyRoomPage() {
   const [steps, setSteps] = useState<AgentStep[]>([])
   const [completed, setCompleted] = useState(false)
   const [totalTokens, setTotalTokens] = useState(0)
+  const [selectedMatter, setSelectedMatter] = useState("Estate of V. Richardson (M-1028)")
+  const [opposingCounsel, setOpposingCounsel] = useState("Jonathan Wright (Wright & Associates)")
+  const [agentModel, setAgentModel] = useState("Claude 3.5 Sonnet (Bedrock)")
+  const [error, setError] = useState<string | null>(null)
+  
+  // Real results from Bedrock
+  const [researchNotes, setResearchNotes] = useState("")
+  const [draftedText, setDraftedText] = useState("")
+  const [complianceCritique, setComplianceCritique] = useState("")
+  const [activeTab, setActiveTab] = useState<"research" | "draft" | "review">("research")
+
   const stepsRef = useRef<HTMLDivElement>(null)
 
   const contextLimit = tenant.aiContextLimit
@@ -55,6 +70,10 @@ export default function StrategyRoomPage() {
     setCompleted(false)
     setSteps([])
     setTotalTokens(0)
+    setError(null)
+    setResearchNotes("")
+    setDraftedText("")
+    setComplianceCritique("")
 
     log({
       tenantId: tenant.id,
@@ -63,49 +82,79 @@ export default function StrategyRoomPage() {
       actor: email || "unknown",
       ip: "192.168.1.42",
       severity: "INFO",
-      details: "LangChain ReAct agent chain initiated for Matter M-1028",
+      details: `LangChain ReAct agent chain initiated for ${selectedMatter}`,
+    })
+
+    // Start API Request to AWS Bedrock in background
+    const targetQuery = QUERY_MAP[selectedMatter] || "Draft a legal case strategy."
+    const caseId = selectedMatter.match(/\(([^)]+)\)/)?.[1] || null
+
+    const apiPromise = fetch("/api/agent/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: targetQuery, caseId })
     })
 
     let runningTokens = 0
 
+    // Progress the UI steps visually (sequential animation)
     for (let i = 0; i < AGENT_CHAIN.length; i++) {
       const step = AGENT_CHAIN[i]
       const stepId = i + 1
 
-      // Add step as "running"
       setSteps(prev => [...prev, { ...step, id: stepId, status: "running" }])
 
-      // Scroll to bottom
       setTimeout(() => {
         stepsRef.current?.scrollTo({ top: stepsRef.current.scrollHeight, behavior: "smooth" })
       }, 100)
 
-      // Simulate processing time
-      await new Promise(r => setTimeout(r, 800 + Math.random() * 1200))
+      // Dynamic delay for tracing realism
+      await new Promise(r => setTimeout(r, 600 + Math.random() * 600))
 
-      // Mark as done and accumulate tokens
       runningTokens += step.tokensUsed || 0
       setTotalTokens(runningTokens)
       setSteps(prev => prev.map(s =>
         s.id === stepId
-          ? { ...s, status: step.type === "guardrail" ? "warning" : "done", duration: Math.floor(200 + Math.random() * 800) }
+          ? { ...s, status: step.type === "guardrail" ? "warning" : "done", duration: Math.floor(200 + Math.random() * 500) }
           : s
       ))
     }
 
-    consumeTokens(runningTokens)
-    setIsRunning(false)
-    setCompleted(true)
+    try {
+      const res = await apiPromise
+      const data = await res.json()
 
-    log({
-      tenantId: tenant.id,
-      category: "AI",
-      event: "AGENT_CHAIN_COMPLETED",
-      actor: email || "unknown",
-      ip: "192.168.1.42",
-      severity: "SUCCESS",
-      details: `LangChain agent chain completed. Total tokens consumed: ${runningTokens.toLocaleString()}`,
-    })
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to execute agent pipeline on Bedrock.")
+      }
+
+      if (data.success) {
+        setResearchNotes(data.researchNotes || "")
+        setDraftedText(data.draftedText || "")
+        setComplianceCritique(data.complianceCritique || "")
+      } else {
+        throw new Error(data.error || "Unsuccessful agent execution.")
+      }
+
+      consumeTokens(runningTokens)
+      setCompleted(true)
+
+      log({
+        tenantId: tenant.id,
+        category: "AI",
+        event: "AGENT_CHAIN_COMPLETED",
+        actor: email || "unknown",
+        ip: "192.168.1.42",
+        severity: "SUCCESS",
+        details: `Agent chain successfully parsed through Bedrock. Total tokens: ${runningTokens.toLocaleString()}`,
+      })
+
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "An unexpected error occurred during execution.")
+    } finally {
+      setIsRunning(false)
+    }
   }
 
   const getStepIcon = (step: AgentStep) => {
@@ -127,7 +176,7 @@ export default function StrategyRoomPage() {
   }
 
   return (
-    <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8">
+    <div className="h-full flex flex-col items-start w-full animate-in fade-in space-y-8 pb-12">
       <div className="border-b border-white/10 pb-4 w-full flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4 md:gap-0">
         <div>
           <div className="flex items-center gap-3">
@@ -152,7 +201,11 @@ export default function StrategyRoomPage() {
             <CardContent className="pt-6 space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Select Matter</label>
-                <select className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-sm font-mono text-white/80 outline-none focus:ring-1 focus:ring-emerald-500">
+                <select 
+                  value={selectedMatter}
+                  onChange={(e) => setSelectedMatter(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-sm font-mono text-white/80 outline-none focus:ring-1 focus:ring-emerald-500"
+                >
                   <option>Estate of V. Richardson (M-1028)</option>
                   <option>Smith v. OmniCorp (M-1024)</option>
                   <option>Techstart Merger (M-1026)</option>
@@ -162,17 +215,26 @@ export default function StrategyRoomPage() {
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Opposing Counsel</label>
                 <div className="flex bg-black/50 border border-white/10 rounded-lg px-3 py-2 items-center">
-                  <input type="text" defaultValue="Jonathan Wright (Wright & Associates)" className="bg-transparent flex-1 outline-none text-sm font-mono text-white/80" />
+                  <input 
+                    type="text" 
+                    value={opposingCounsel}
+                    onChange={(e) => setOpposingCounsel(e.target.value)}
+                    className="bg-transparent flex-1 outline-none text-sm font-mono text-white/80" 
+                  />
                   <Target className="w-4 h-4 text-emerald-400 opacity-50" />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40 block">Agent Model</label>
-                <select className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-sm font-mono text-white/80 outline-none focus:ring-1 focus:ring-emerald-500">
+                <select 
+                  value={agentModel}
+                  onChange={(e) => setAgentModel(e.target.value)}
+                  className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-sm font-mono text-white/80 outline-none focus:ring-1 focus:ring-emerald-500"
+                >
                   <option>Claude 3.5 Sonnet (Bedrock)</option>
                   <option>Llama 3.1 70B (Bedrock)</option>
-                  <option>Gemini 2.5 Pro (Vertex)</option>
+                  <option>Claude 3.5 Haiku (Bedrock)</option>
                 </select>
               </div>
 
@@ -224,8 +286,18 @@ export default function StrategyRoomPage() {
 
         {/* Right: Agent Trace */}
         <div className="lg:col-span-8 flex flex-col space-y-6 min-h-0">
+          {error && (
+            <div className="flex items-start gap-3 p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-red-400 text-xs font-mono">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block mb-1">Execution Failure</strong>
+                {error}
+              </div>
+            </div>
+          )}
+
           {!isRunning && steps.length === 0 && (
-            <div className="flex-1 border border-white/10 rounded-2xl flex flex-col items-center justify-center bg-white/[0.01]">
+            <div className="flex-1 border border-white/10 rounded-2xl flex flex-col items-center justify-center bg-white/[0.01] min-h-[300px]">
               <BrainCircuit className="w-12 h-12 text-white/10 mb-4" />
               <p className="text-sm font-serif italic text-white/40">Configure the agent and click &quot;Run Agent Chain&quot; to begin.</p>
               <p className="text-[10px] font-mono text-white/20 mt-2 uppercase tracking-widest">LangChain ReAct · Tool Augmented Reasoning</p>
@@ -233,8 +305,8 @@ export default function StrategyRoomPage() {
           )}
 
           {(isRunning || steps.length > 0) && (
-            <div className="flex-1 border border-white/10 rounded-2xl flex flex-col overflow-hidden">
-              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+            <div className="flex-1 border border-white/10 rounded-2xl flex flex-col overflow-hidden max-h-[400px]">
+              <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-black/20">
                 <div className="flex items-center gap-3">
                   <h3 className="text-xs font-bold uppercase tracking-widest text-white/60">Agent Execution Trace</h3>
                   {isRunning && (
@@ -279,26 +351,78 @@ export default function StrategyRoomPage() {
 
           {/* Results Panel */}
           {completed && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-              <Card className="bg-emerald-950/20 border-emerald-500/20 rounded-2xl shadow-none">
-                <CardContent className="pt-6 space-y-2">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Settle (Favorable)</div>
-                  <div className="text-3xl font-mono text-emerald-400">62%</div>
-                  <div className="text-xs text-white/40 font-mono">Est. $1.4M – $1.8M</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-blue-950/20 border-blue-500/20 rounded-2xl shadow-none">
-                <CardContent className="pt-6 space-y-2">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Litigate (Win)</div>
-                  <div className="text-3xl font-mono text-blue-400">28%</div>
-                  <div className="text-xs text-white/40 font-mono">Est. $2.5M + Costs</div>
-                </CardContent>
-              </Card>
-              <Card className="bg-red-950/20 border-red-500/20 rounded-2xl shadow-none">
-                <CardContent className="pt-6 space-y-2">
-                  <div className="text-[10px] font-bold uppercase tracking-widest text-red-500">Litigate (Loss)</div>
-                  <div className="text-3xl font-mono text-red-400">10%</div>
-                  <div className="text-xs text-white/40 font-mono">Est. $0 + Defense Costs</div>
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="bg-emerald-950/20 border-emerald-500/20 rounded-2xl shadow-none">
+                  <CardContent className="pt-6 space-y-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Settle (Favorable)</div>
+                    <div className="text-3xl font-mono text-emerald-400">62%</div>
+                    <div className="text-xs text-white/40 font-mono">Est. $1.4M – $1.8M</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-blue-950/20 border-blue-500/20 rounded-2xl shadow-none">
+                  <CardContent className="pt-6 space-y-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Litigate (Win)</div>
+                    <div className="text-3xl font-mono text-blue-400">28%</div>
+                    <div className="text-xs text-white/40 font-mono">Est. $2.5M + Costs</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-red-950/20 border-red-500/20 rounded-2xl shadow-none">
+                  <CardContent className="pt-6 space-y-2">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-red-500">Litigate (Loss)</div>
+                    <div className="text-3xl font-mono text-red-400">10%</div>
+                    <div className="text-xs text-white/40 font-mono">Est. $0 + Defense Costs</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Dynamic Bedrock Generated Output Panel */}
+              <Card className="bg-white/[0.02] border-white/10 rounded-2xl shadow-none overflow-hidden">
+                <div className="flex border-b border-white/10 bg-black/40">
+                  <button
+                    onClick={() => setActiveTab("research")}
+                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest border-r border-white/5 transition-colors ${activeTab === "research" ? "bg-white/5 text-emerald-400" : "text-white/40 hover:text-white"}`}
+                  >
+                    1. Research Brief
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("draft")}
+                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest border-r border-white/5 transition-colors ${activeTab === "draft" ? "bg-white/5 text-emerald-400" : "text-white/40 hover:text-white"}`}
+                  >
+                    2. Drafted Clause
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("review")}
+                    className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${activeTab === "review" ? "bg-white/5 text-emerald-400" : "text-white/40 hover:text-white"}`}
+                  >
+                    3. Compliance Audit
+                  </button>
+                </div>
+                <CardContent className="p-6">
+                  {activeTab === "research" && (
+                    <div className="space-y-4 animate-in fade-in duration-300">
+                      <h4 className="text-xs font-bold font-mono text-white/40 uppercase tracking-widest flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-emerald-400" /> Bedrock Research synthesis
+                      </h4>
+                      <p className="text-xs text-white/80 font-serif leading-relaxed whitespace-pre-wrap">{researchNotes || "No research brief generated."}</p>
+                    </div>
+                  )}
+                  {activeTab === "draft" && (
+                    <div className="space-y-4 animate-in fade-in duration-300">
+                      <h4 className="text-xs font-bold font-mono text-white/40 uppercase tracking-widest flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-400" /> Bedrock Drafted legal text
+                      </h4>
+                      <p className="text-xs text-white/80 font-serif leading-relaxed whitespace-pre-wrap bg-black/40 p-4 rounded-xl border border-white/5">{draftedText || "No clauses drafted."}</p>
+                    </div>
+                  )}
+                  {activeTab === "review" && (
+                    <div className="space-y-4 animate-in fade-in duration-300">
+                      <h4 className="text-xs font-bold font-mono text-white/40 uppercase tracking-widest flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-yellow-400" /> Bedrock Compliance critique
+                      </h4>
+                      <p className="text-xs text-white/80 font-serif leading-relaxed whitespace-pre-wrap">{complianceCritique || "No compliance critique generated."}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

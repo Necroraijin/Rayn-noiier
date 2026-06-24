@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import { PrismaClient } from "@prisma/client"
+import { prisma } from "@/lib/db"
 import {
   BedrockRuntimeClient,
   InvokeModelCommand,
 } from "@aws-sdk/client-bedrock-runtime";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages"
-
-const prisma = new PrismaClient()
 
 export async function POST(req: Request) {
   try {
