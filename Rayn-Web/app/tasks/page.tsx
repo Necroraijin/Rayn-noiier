@@ -24,6 +24,8 @@ export default function TasksPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState("")
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
 
   // Form fields
   const [title, setTitle] = useState("")
@@ -111,8 +113,11 @@ export default function TasksPage() {
     }
   }
 
-  const handleDeleteTask = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this task?")) return
+  const handleDeleteTask = async () => {
+    if (!taskToDelete) return
+    const id = taskToDelete
+    setIsDeleteOpen(false)
+    setTaskToDelete(null)
 
     try {
       // Optimistic update
@@ -283,7 +288,8 @@ export default function TasksPage() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleDeleteTask(task.id)
+                          setTaskToDelete(task.id)
+                          setIsDeleteOpen(true)
                         }}
                         className="text-white/20 hover:text-red-400 transition-colors p-1 rounded"
                       >
@@ -325,6 +331,31 @@ export default function TasksPage() {
             </div>
           </div>
       </div>
+
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="bg-[#0a0a0a] border-white/10 text-white sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="font-serif italic text-xl font-light text-red-400">Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 text-xs font-mono uppercase tracking-widest text-white/60">
+            Are you sure you want to permanently delete this task? This action cannot be undone.
+          </div>
+          <DialogFooter className="pt-4 border-t border-white/5 flex gap-2">
+            <Button 
+              onClick={() => setIsDeleteOpen(false)}
+              className="border border-white/10 bg-transparent text-white hover:bg-white/5 uppercase tracking-widest font-bold text-[10px] rounded px-4 h-9"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeleteTask}
+              className="bg-red-500 text-black hover:bg-red-400 uppercase tracking-widest font-bold text-[10px] rounded px-4 h-9"
+            >
+              Delete Task
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
