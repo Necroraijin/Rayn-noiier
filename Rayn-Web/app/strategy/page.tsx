@@ -100,6 +100,68 @@ export default function StrategyRoomPage() {
   const contextPercent = Math.min(100, Math.round((totalTokens / contextLimit) * 100))
   const stats = MATTER_STATS[selectedMatter] || MATTER_STATS["Estate of V. Richardson (M-1028)"]
 
+  const [isUploadingFile, setIsUploadingFile] = useState(false)
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploadingFile(true)
+    setUploadSuccess(null)
+    setError(null)
+
+    try {
+      const caseId = selectedMatter.match(/\(([^)]+)\)/)?.[1] || null
+      // 1. Get presigned upload URL
+      const res = await fetch("/api/documents/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, fileType: file.type, caseId })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate S3 upload URL")
+      }
+
+      // 2. PUT request to S3 presigned URL
+      const uploadRes = await fetch(data.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type
+        },
+        body: file
+      })
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to Amazon S3")
+      }
+
+      setUploadSuccess(file.name)
+      log({
+        tenantId: tenant.id,
+        category: "DATA",
+        event: "DOCUMENT_UPLOADED",
+        actor: email || "unknown",
+        ip: "192.168.1.42",
+        severity: "INFO",
+        details: `Uploaded case file ${file.name} to S3 bucket ${data.bucket} for case ${caseId || "unassigned"}`
+      })
+      alert(`Successfully uploaded ${file.name} to Amazon S3! The ingestion worker is processing it.`)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Failed to upload case document.")
+    } finally {
+      setIsUploadingFile(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
   const handleSimulate = async () => {
     setIsRunning(true)
     setCompleted(false)
@@ -273,10 +335,29 @@ export default function StrategyRoomPage() {
                 </select>
               </div>
 
-              <div className="border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] transition-colors">
-                <Upload className="w-6 h-6 text-white/20 mb-2" />
-                <p className="text-xs font-bold uppercase tracking-widest text-white/60">Upload Case Files</p>
-                <p className="text-[10px] font-mono text-white/30 mt-1">Briefs, exhibits, complaints</p>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                className="hidden" 
+              />
+              <div 
+                onClick={handleUploadClick}
+                className="border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-white/[0.02] transition-colors"
+              >
+                {isUploadingFile ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-emerald-400 mb-2" />
+                ) : uploadSuccess ? (
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400 mb-2" />
+                ) : (
+                  <Upload className="w-6 h-6 text-white/20 mb-2" />
+                )}
+                <p className="text-xs font-bold uppercase tracking-widest text-white/60">
+                  {isUploadingFile ? "Uploading to S3..." : uploadSuccess ? "Ingested Successfully!" : "Upload Case Files"}
+                </p>
+                <p className="text-[10px] font-mono text-white/30 mt-1">
+                  {uploadSuccess ? uploadSuccess : "Briefs, exhibits, complaints"}
+                </p>
               </div>
 
               <button

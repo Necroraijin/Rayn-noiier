@@ -14,6 +14,8 @@ export default function DocumentAnalysisPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [result, setResult] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
 
   const handleAnalyze = async () => {
     if (!inputText.trim()) return
@@ -49,6 +51,60 @@ export default function DocumentAnalysisPage() {
     }
   }
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    setErrorMsg("")
+
+    try {
+      // 1. Get presigned upload URL
+      const res = await fetch("/api/documents/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename: file.name, fileType: file.type })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to generate S3 upload URL")
+      }
+
+      // 2. PUT request to S3 presigned URL
+      const uploadRes = await fetch(data.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type
+        },
+        body: file
+      })
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to Amazon S3")
+      }
+
+      // 3. Convenience: Load text file locally
+      if (file.type === "text/plain" || file.name.endsWith(".txt") || file.name.endsWith(".json")) {
+        const text = await file.text()
+        setInputText(text)
+      } else {
+        setInputText(`[File uploaded to S3: ${file.name}]\n\n(AWS Textract RAG pipeline is processing this file in the background. You can paste the content directly here, or search for it in cases/strategy room)`)
+      }
+
+      alert(`Successfully uploaded ${file.name} to Amazon S3!`)
+    } catch (err: any) {
+      console.error(err)
+      setErrorMsg(err.message || "Failed to upload document.")
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
+    }
+  }
+
   return (
     <div className="space-y-8 h-full flex flex-col">
       <div className="border-b border-white/10 pb-4">
@@ -61,9 +117,25 @@ export default function DocumentAnalysisPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-xs uppercase tracking-[0.3em] font-bold text-white/40">Input Source</CardTitle>
-              <Button variant="outline" size="sm" className="h-8 gap-2 bg-transparent border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded text-[10px] uppercase font-bold tracking-widest">
-                <FileUp className="h-4 w-4" />
-                Upload
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                className="hidden" 
+              />
+              <Button 
+                variant="outline" 
+                size="sm" 
+                disabled={isUploading}
+                onClick={handleUploadClick}
+                className="h-8 gap-2 bg-transparent border-white/20 text-white/80 hover:bg-white/10 hover:text-white rounded text-[10px] uppercase font-bold tracking-widest"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-emerald-400" />
+                ) : (
+                  <FileUp className="h-4 w-4" />
+                )}
+                {isUploading ? "Uploading..." : "Upload"}
               </Button>
             </div>
           </CardHeader>

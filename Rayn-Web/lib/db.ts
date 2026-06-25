@@ -19,8 +19,8 @@ export async function withTenantContext<T>(
   operation: (tx: any) => Promise<T>
 ): Promise<T> {
   return await prisma.$transaction(async (tx) => {
-    // Set the PostgreSQL session variable for tenant isolation using set_config (which supports parameters)
-    await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', $1, true)`, tenantId)
+    // Set the PostgreSQL session variable for tenant isolation using string interpolation (safe alphanumeric tenantId)
+    await tx.$executeRawUnsafe(`SET LOCAL app.current_tenant_id = '${tenantId}'`)
     return await operation(tx)
   })
 }
@@ -34,7 +34,7 @@ export function getTenantDb(tenantId: string) {
     query: {
       $allOperations({ model, operation, args, query }) {
         return prisma.$transaction(async (tx) => {
-          await tx.$executeRawUnsafe(`SELECT set_config('app.current_tenant_id', $1, true)`, tenantId)
+          await tx.$executeRawUnsafe(`SET LOCAL app.current_tenant_id = '${tenantId}'`)
           return await query(args)
         })
       }
