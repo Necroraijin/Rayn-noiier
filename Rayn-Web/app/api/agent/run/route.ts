@@ -4,6 +4,7 @@ import { prisma, getTenantDb } from "@/lib/db"
 import { searchPrivateDocuments, searchGlobalPrecedents } from "@/lib/ai/vector-store"
 import { runResearchAgent, runDraftingAgent, runReviewAgent } from "@/lib/ai/legal-agents"
 import { applyGuardrails } from "@/lib/ai/guardrails"
+import { searchWeb } from "@/lib/ai/web-search"
 
 export async function POST(req: Request) {
   try {
@@ -58,8 +59,14 @@ export async function POST(req: Request) {
       .map(prec => `[Precedent: ${prec.title} (${prec.year})] Citation: ${prec.citation} (${prec.court})\nSummary: ${prec.summary}`)
       .join("\n\n")
 
+    // ── STEP 1.5: Live Web Search Context ────────────────────────────────
+    const webResults = await searchWeb(sanitizedQuery, 3)
+    const webContext = webResults
+      .map(res => `[Source: ${res.title}] URL: ${res.url}\nSummary: ${res.snippet}`)
+      .join("\n\n")
+
     // ── STEP 2: Research Agent ──────────────────────────────────────────
-    const researchNotes = await runResearchAgent(sanitizedQuery, privateContext, globalContext)
+    const researchNotes = await runResearchAgent(sanitizedQuery, privateContext, globalContext, webContext)
 
     // ── STEP 3: Drafting Agent ──────────────────────────────────────────
     const draftedText = await runDraftingAgent(sanitizedQuery, researchNotes)

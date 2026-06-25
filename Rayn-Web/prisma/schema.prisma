@@ -29,6 +29,7 @@ model Tenant {
   documents       Document[]
   auditLogs       AuditLog[]
   preferences     Preference[]
+  tasks           Task[]
 }
 
 model User {
@@ -103,4 +104,17 @@ model Preference {
   embedding Unsupported("vector(1536)")?
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Task {
+  id         String   @id @default(uuid())
+  title      String
+  matter     String
+  priority   String   // "HIGH", "MEDIUM", "LOW"
+  dueDate    String
+  completed  Boolean  @default(false)
+  assignedBy String
+  createdAt  DateTime @default(now())
+  tenantId   String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }

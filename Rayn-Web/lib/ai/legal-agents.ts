@@ -55,26 +55,35 @@ async function invokeBedrockClaude(
 export async function runResearchAgent(
   userQuery: string,
   privateDocsContext: string,
-  globalPrecedentsContext: string
+  globalPrecedentsContext: string,
+  webSearchContext: string
 ): Promise<string> {
-  const systemPrompt = `You are ARBITER's Senior Legal Research Agent specializing in Indian Jurisdiction.
-Your task is to analyze the user's legal question and synthesize information from two source streams:
-1. INTERNAL CASE DATA: Client files, evidence, and internal firm briefs.
-2. GLOBAL LEGAL LAWS: Indian statutes, Constitution, BNS/IPC, CrPC, and Supreme Court precedent citations.
+  const systemPrompt = `You are ARBITER's Lead Legal Research Agent specializing in Indian Jurisprudence.
+Your task is to thoroughly analyze the user's legal question or request, and synthesize data from three distinct source streams:
+1. INTERNAL CASE FILES: Private documents, briefs, or client materials.
+2. PRECEDENT DATABASE: Matched similarity cases from Supreme Court / High Courts of India.
+3. LIVE WEB RESEARCH: Up-to-date Indian legal news, amendments, and notifications retrieved live from the web.
 
-Rules:
-- Strictly prioritize Indian legal precedents and acts.
-- Cite specific file names, case names, citation numbers, and years.
-- Do not fabricate or hallucinate citations. If a citation is missing from the sources, state it clearly.
-- Create a structured Research Note containing: Case Facts Summary, Key Legal Questions, Relevant Statutes, and Supporting Precedents.`
+Instructions:
+- Prioritize Indian statutory codes, acts, and procedural rules (such as BNS - Bharatiya Nyaya Sanhita, BNSS, BSA, or legacy IPC, CrPC, IEA).
+- Cite case precedents with specific party names, citation identifiers, and years.
+- Structure your output clearly in markdown:
+  * **FACTS SUMMARY**: Core facts of the client's scenario.
+  * **LEGAL ISSUES & CONFLICTS**: Specific legal questions to resolve.
+  * **STATUTORY ANALYSIS**: Sections of Indian statutes applicable (e.g. Contract Act, Companies Act, BNS, etc.).
+  * **SUPPORTING PRECEDENTS**: Relevant ruling citations from SC/HC.
+  * **CURRENT LEGAL OUTLOOK (WEB)**: Critical recent developments or context from live web search.`
 
   const userPrompt = `User Query: ${userQuery}
 
 --- SOURCE STREAM 1 (Internal Case Files) ---
 ${privateDocsContext || "No internal documents found."}
 
---- SOURCE STREAM 2 (Global Precedents & Indian Statutes) ---
-${globalPrecedentsContext || "No global precedents found in vector index."}`
+--- SOURCE STREAM 2 (Precedents & Indian Statutes) ---
+${globalPrecedentsContext || "No global precedents found in vector index."}
+
+--- SOURCE STREAM 3 (Live Web Search Results) ---
+${webSearchContext || "No live web search context available."}`
 
   return await invokeBedrockClaude(systemPrompt, userPrompt);
 }
@@ -84,18 +93,19 @@ export async function runDraftingAgent(
   userInstructions: string,
   researchNotes: string
 ): Promise<string> {
-  const systemPrompt = `You are ARBITER's Legal Drafting Agent.
-Your task is to draft precise, formal, and enforceable legal clauses or briefs based on the provided Research Notes.
+  const systemPrompt = `You are ARBITER's Principal Drafting Counsel, acting as a highly experienced Indian Advocate.
+Your goal is to draft formal, legally binding documents, clauses, or agreements (such as Memorandums of Understanding (MOU), Non-Disclosure Agreements (NDA), Service Level Agreements (SLA), Share Purchase Agreements, or plain court briefs) according to Indian laws.
 
-Rules:
-- Adopt a professional, firm-specific, and analytical tone.
-- Embed any relevant citations (statutes and cases) directly into the body of the clauses.
-- Clearly organize clauses with standard numbering format.
-- Output ONLY the legal text/clauses. Do not add introductory or conversational pleasantries.`
+Instructions:
+- Adhere strictly to the Indian Contract Act, 1872, Specific Relief Act, Arbitration and Conciliation Act, and other relevant codes.
+- Use traditional and professional legal phrasing (e.g. "Whereas", "In Witness Whereof", "Now Therefore It Is Mutually Agreed").
+- Organize clauses logically with numbering (e.g., Article 1: Definitions, Article 2: Scope, etc.).
+- Incorporate specific dispute resolution clauses specifying Arbitration in India under the Arbitration and Conciliation Act, with seat/venue.
+- Output ONLY the professional legal text. Do not add chatty intros, friendly warnings, or summaries before the document.`
 
-  const userPrompt = `Drafting Instructions: ${userInstructions}
+  const userPrompt = `Drafting Request: ${userInstructions}
 
---- Research Notes & Citations ---
+--- Research Notes & Statutory Guidelines ---
 ${researchNotes}`
 
   return await invokeBedrockClaude(systemPrompt, userPrompt);
@@ -106,20 +116,21 @@ export async function runReviewAgent(
   draftText: string,
   userQuery: string
 ): Promise<string> {
-  const systemPrompt = `You are ARBITER's Senior Compliance and Quality Review Agent.
-Your task is to critique the drafted legal text against the original user query and Indian statutory compliance rules.
+  const systemPrompt = `You are ARBITER's Chief Compliance and Quality Auditor for Indian Legal Matters.
+Your task is to scrutinize the drafted legal document or clauses for legal risk, statutory compliance under Indian laws, and alignment with the client's goals.
 
-Rules:
-- Verify that all cited case precedents or sections (IPC, BNS, CrPC) exist and are relevant.
-- Detect any compliance anomalies (e.g., missing standard confidentiality clauses, liability caps that violate Indian public policy, etc.).
-- Produce a structured compliance critique summarizing:
-  1. Integrity of Citations (Pass/Fail + details)
-  2. Detected Gaps or Risks
-  3. Actionable Corrections`
+Instructions:
+- Cross-examine references to legacy codes vs. current codes (e.g. check if BNS 2023 or IPC 1860 is more appropriate depending on the case date).
+- Identify stamp duty compliance risks, registration requirements, or boilerplate gaps (e.g. missing severability, force majeure, or governing law).
+- Output a detailed compliance audit structured in markdown:
+  1. **CITATION VALIDITY & VERIFICATION**: (Pass/Fail with detailed reasons).
+  2. **DETECTED RISK VECTORS**: Specific loopholes, liabilities, or unfavorable terms.
+  3. **STAMP DUTY & REGISTRATION WARNINGS**: Check if this draft is subject to mandatory stamp duty/registration under the Indian Stamp Act, 1899.
+  4. **CORRECTIVE RECOMMENDATIONS**: List exact improvements or substitute clauses.`
 
-  const userPrompt = `Original Request: ${userQuery}
+  const userPrompt = `Client's Original Intent: ${userQuery}
 
---- Drafted Text for Review ---
+--- Drafted Legal Text for Review ---
 ${draftText}`
 
   return await invokeBedrockClaude(systemPrompt, userPrompt);
