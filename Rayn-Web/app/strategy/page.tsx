@@ -41,6 +41,40 @@ const QUERY_MAP: Record<string, string> = {
   "Techstart Merger (M-1026)": "Draft the non-compete clause for the Techstart Merger and review it for compliance under Indian Competition Act."
 }
 
+const MATTER_STATS: Record<string, {
+  settlePercent: string
+  settleRange: string
+  winPercent: string
+  winEst: string
+  lossPercent: string
+  lossEst: string
+}> = {
+  "Estate of V. Richardson (M-1028)": {
+    settlePercent: "72%",
+    settleRange: "Est. ₹60L – ₹80L",
+    winPercent: "23%",
+    winEst: "Est. ₹1.2Cr + Costs",
+    lossPercent: "5%",
+    lossEst: "Est. ₹0 + Defense Costs"
+  },
+  "Smith v. OmniCorp (M-1024)": {
+    settlePercent: "45%",
+    settleRange: "Est. ₹1.5Cr – ₹2.0Cr",
+    winPercent: "40%",
+    winEst: "Est. ₹3.5Cr + Costs",
+    lossPercent: "15%",
+    lossEst: "Est. ₹0 + Defense Costs"
+  },
+  "Techstart Merger (M-1026)": {
+    settlePercent: "85%",
+    settleRange: "Est. ₹4.0Cr – ₹5.0Cr",
+    winPercent: "10%",
+    winEst: "Est. ₹7.0Cr + Costs",
+    lossPercent: "5%",
+    lossEst: "Est. ₹0 + Defense Costs"
+  }
+}
+
 export default function StrategyRoomPage() {
   const { tenant, consumeTokens } = useTenant()
   const { log } = useAuditLog()
@@ -64,6 +98,7 @@ export default function StrategyRoomPage() {
 
   const contextLimit = tenant.aiContextLimit
   const contextPercent = Math.min(100, Math.round((totalTokens / contextLimit) * 100))
+  const stats = MATTER_STATS[selectedMatter] || MATTER_STATS["Estate of V. Richardson (M-1028)"]
 
   const handleSimulate = async () => {
     setIsRunning(true)
@@ -356,22 +391,22 @@ export default function StrategyRoomPage() {
                 <Card className="bg-emerald-950/20 border-emerald-500/20 rounded-2xl shadow-none">
                   <CardContent className="pt-6 space-y-2">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-500">Settle (Favorable)</div>
-                    <div className="text-3xl font-mono text-emerald-400">62%</div>
-                    <div className="text-xs text-white/40 font-mono">Est. $1.4M – $1.8M</div>
+                    <div className="text-3xl font-mono text-emerald-400">{stats.settlePercent}</div>
+                    <div className="text-xs text-white/40 font-mono">{stats.settleRange}</div>
                   </CardContent>
                 </Card>
                 <Card className="bg-blue-950/20 border-blue-500/20 rounded-2xl shadow-none">
                   <CardContent className="pt-6 space-y-2">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-blue-500">Litigate (Win)</div>
-                    <div className="text-3xl font-mono text-blue-400">28%</div>
-                    <div className="text-xs text-white/40 font-mono">Est. $2.5M + Costs</div>
+                    <div className="text-3xl font-mono text-blue-400">{stats.winPercent}</div>
+                    <div className="text-xs text-white/40 font-mono">{stats.winEst}</div>
                   </CardContent>
                 </Card>
                 <Card className="bg-red-950/20 border-red-500/20 rounded-2xl shadow-none">
                   <CardContent className="pt-6 space-y-2">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-red-500">Litigate (Loss)</div>
-                    <div className="text-3xl font-mono text-red-400">10%</div>
-                    <div className="text-xs text-white/40 font-mono">Est. $0 + Defense Costs</div>
+                    <div className="text-3xl font-mono text-red-400">{stats.lossPercent}</div>
+                    <div className="text-xs text-white/40 font-mono">{stats.lossEst}</div>
                   </CardContent>
                 </Card>
               </div>

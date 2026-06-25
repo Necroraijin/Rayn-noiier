@@ -14,6 +14,7 @@ const {
   CognitoIdentityProviderClient,
   CreateUserPoolCommand,
   CreateUserPoolClientCommand,
+  CreateUserPoolDomainCommand,
   AdminCreateUserCommand,
   AdminSetUserPasswordCommand
 } = require("@aws-sdk/client-cognito-identity-provider");
@@ -97,13 +98,32 @@ async function run() {
       UserPoolId: userPoolId,
       GenerateSecret: true,
       ExplicitAuthFlows: ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"],
-      SupportedIdentityProviders: ["COGNITO"]
+      SupportedIdentityProviders: ["COGNITO"],
+      AllowedOAuthFlowsUserPoolClient: true,
+      AllowedOAuthFlows: ["code"],
+      AllowedOAuthScopes: ["openid", "email", "profile", "aws.cognito.signin.user.admin"],
+      CallbackURLs: [
+        "http://localhost:3000/api/auth/callback/cognito"
+      ]
     });
 
     const clientResponse = await client.send(createClient);
     const clientId = clientResponse.UserPoolClient.ClientId;
     const clientSecret = clientResponse.UserPoolClient.ClientSecret;
     console.log(`Successfully created User Pool Client: ${clientId}`);
+
+    console.log("Creating User Pool Domain...");
+    const domainPrefix = `rayn-auth-${userPoolId.toLowerCase().replace(/_/g, "-")}`;
+    try {
+      const createDomain = new CreateUserPoolDomainCommand({
+        Domain: domainPrefix,
+        UserPoolId: userPoolId
+      });
+      await client.send(createDomain);
+      console.log(`Successfully created User Pool Domain Prefix: ${domainPrefix}`);
+    } catch (domainError) {
+      console.warn(`Could not create User Pool Domain prefix ${domainPrefix}:`, domainError.message);
+    }
 
     // ─── 4. Pre-create testing accounts ───────────────────────────────────
     const testUsers = [

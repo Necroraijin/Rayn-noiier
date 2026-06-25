@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/db"
-import {
-  BedrockRuntimeClient,
-  InvokeModelCommand,
-} from "@aws-sdk/client-bedrock-runtime";
-import { HumanMessage, SystemMessage } from "@langchain/core/messages"
+import { InvokeModelCommand } from "@aws-sdk/client-bedrock-runtime"
+import { bedrockClient } from "@/lib/aws"
 
 export async function POST(req: Request) {
   try {
@@ -41,7 +38,7 @@ export async function POST(req: Request) {
     }
 
     let resultText = ""
-    const systemPrompt = `You are a highly capable AI Legal Assistant.
+    const systemPrompt = `You are a highly capable AI Legal Assistant specializing in Indian law.
 Analyze the following legal text. Please extract the key clauses, summarize the main points, and flag any potential risks or unusual liabilities. Format your output strictly in markdown, using headings, clear bullet points, and bold text for emphasis where appropriate. Maintain a professional, objective legal tone.`
 
     // Check if AWS Credentials are set
@@ -49,42 +46,38 @@ Analyze the following legal text. Please extract the key clauses, summarize the 
 
     if (hasAwsCreds) {
       try {
-        const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || "ap-south-1" })
-
         const payload = {
+          anthropic_version: "bedrock-2023-05-31",
+          max_tokens: 4096,
+          temperature: 0.2,
+          system: systemPrompt,
           messages: [
-            { role: "system", content: systemPrompt },
             { role: "user", content: text },
           ],
         }
 
         const command = new InvokeModelCommand({
-          modelId: "anthropic.claude-3-5-sonnet-20240620-v1",
+          modelId: "anthropic.claude-3-5-sonnet-20240620-v1:0",
           contentType: "application/json",
           accept: "application/json",
           body: JSON.stringify(payload),
         })
 
-        const resp = await client.send(command)
+        const resp = await bedrockClient.send(command)
 
-        // Try to extract response body text; fall back to stringifying the response
-        let bodyText = ""
-        try {
-          // In some environments resp.Body has transformToString
-          if ((resp as any).body && typeof (resp as any).body.transformToString === "function") {
-            bodyText = await (resp as any).body.transformToString()
-          } else if ((resp as any).body instanceof Uint8Array) {
-            bodyText = new TextDecoder().decode((resp as any).body)
-          } else if (typeof (resp as any).body === "string") {
-            bodyText = (resp as any).body
-          } else {
-            bodyText = JSON.stringify(resp)
-          }
-        } catch (e) {
-          bodyText = JSON.stringify(resp)
+        // Parse the response body
+        const rawBody = new TextDecoder().decode(resp.body)
+        const parsed = JSON.parse(rawBody)
+
+        // Claude Messages API returns: { content: [{ type: "text", text: "..." }], ... }
+        if (parsed.content && Array.isArray(parsed.content) && parsed.content.length > 0) {
+          resultText = parsed.content
+            .filter((block: any) => block.type === "text")
+            .map((block: any) => block.text)
+            .join("\n")
+        } else {
+          resultText = typeof parsed === "string" ? parsed : JSON.stringify(parsed)
         }
-
-        resultText = bodyText
       } catch (bedrockError: any) {
         console.warn("AWS Bedrock execution failed, falling back to simulated analysis:", bedrockError)
         resultText = generateMockAnalysis(text)

@@ -172,6 +172,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   const [tenants, setTenants] = useState<Tenant[]>(TENANT_DB)
   const [activeTenantId, setActiveTenantId] = useState<string>("rayn")
   const [userStore, setUserStore] = useState<Record<string, TenantUser[]>>(TENANT_USERS)
+  const [caseStore, setCaseStore] = useState<Record<string, TenantCase[]>>(TENANT_CASES)
 
   // Fetch active tenant data from database
   useEffect(() => {
@@ -189,6 +190,36 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
               return [...prev, data.tenant]
             })
             setActiveTenantId(data.tenant.id)
+
+            // Dynamic database sync
+            if (data.users && data.users.length > 0) {
+              setUserStore(prev => ({
+                ...prev,
+                [data.tenant.id]: data.users.map((u: any) => ({
+                  id: u.id,
+                  name: u.name,
+                  email: u.email,
+                  role: u.role,
+                  status: u.status,
+                  lastActive: u.lastActive,
+                  mfaEnabled: u.mfaEnabled,
+                }))
+              }))
+            }
+            if (data.cases && data.cases.length > 0) {
+              setCaseStore(prev => ({
+                ...prev,
+                [data.tenant.id]: data.cases.map((c: any) => ({
+                  id: c.id,
+                  title: c.title,
+                  client: c.client,
+                  status: c.status,
+                  progress: c.progress,
+                  assignee: c.assignee,
+                  practiceArea: c.practiceArea,
+                }))
+              }))
+            }
           }
         }
       } catch (err) {
@@ -207,7 +238,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const tenant = tenants.find(t => t.id === activeTenantId) || tenants[0]
-  const cases = TENANT_CASES[activeTenantId] || []
+  const cases = caseStore[activeTenantId] || []
   const users = userStore[activeTenantId] || []
 
   const switchTenant = useCallback((id: string) => {

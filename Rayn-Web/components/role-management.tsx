@@ -51,8 +51,8 @@ const initialUsers: UserType[] = [
 
 export default function RoleManagement() {
   const [roles, setRoles] = useState<RoleType[]>(initialRoles)
-  const [users, setUsers] = useState<UserType[]>(initialUsers)
-  
+  const [users, setUsers] = useState<UserType[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
   const [viewingRole, setViewingRole] = useState<string | null>(null)
   
   // Role Edit/Add State
@@ -62,7 +62,45 @@ export default function RoleManagement() {
 
   // User Add State
   const [isUserModalOpen, setIsUserModalOpen] = useState(false)
-  const [userForm, setUserForm] = useState({ name: "", email: "", roleId: "" })
+  const [userForm, setUserForm] = useState({ name: "", email: "", roleId: "", password: "" })
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false)
+  const [userError, setUserError] = useState("")
+
+  const fetchUsers = async () => {
+    setIsLoadingUsers(true)
+    try {
+      const res = await fetch("/api/users")
+      const data = await res.json()
+      if (data.users) {
+        const roleMapping: Record<string, string> = {
+          SUPER_ADMIN: "r1",
+          EQUITY_PARTNER: "r1",
+          SALARIED_PARTNER: "r1",
+          COUNSEL: "r2",
+          SENIOR_ASSOCIATE: "r2",
+          ASSOCIATE: "r2",
+          PARALEGAL: "r2",
+          BILLING_ADMIN: "r1",
+          GUEST_CLIENT: "r3"
+        }
+        const mappedUsers = data.users.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          roleId: roleMapping[u.role] || "r2"
+        }))
+        setUsers(mappedUsers)
+      }
+    } catch (err) {
+      console.error("Failed to load workspace users:", err)
+    } finally {
+      setIsLoadingUsers(false)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchUsers()
+  }, [])
 
   const handleOpenRoleModal = (role?: RoleType) => {
     if (role) {
@@ -88,7 +126,6 @@ export default function RoleManagement() {
 
   const handleDeleteRole = (id: string) => {
     setRoles(roles.filter(r => r.id !== id))
-    // Also re-assign users or handle cascading if necessary, out of scope for mock
   }
 
   const togglePermission = (perm: string) => {
@@ -100,11 +137,69 @@ export default function RoleManagement() {
     }))
   }
 
-  const handleSaveUser = () => {
-    if (!userForm.name || !userForm.email || !userForm.roleId) return
-    setUsers([...users, { id: `u${Date.now()}`, ...userForm }])
-    setIsUserModalOpen(false)
-    setUserForm({ name: "", email: "", roleId: "" })
+  const handleSaveUser = async () => {
+    if (!userForm.name || !userForm.email || !userForm.roleId || !userForm.password) {
+      setUserError("Please fill out all fields, including password.")
+      return
+    }
+
+    setIsSubmittingUser(true)
+    setUserError("")
+
+    const sysRoleMapping: Record<string, string> = {
+      r1: "SUPER_ADMIN",
+      r2: "ASSOCIATE",
+      r3: "GUEST_CLIENT"
+    }
+
+    try {
+      const res = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: userForm.name,
+          email: userForm.email,
+          role: sysRoleMapping[userForm.roleId] || "ASSOCIATE",
+          password: userForm.password
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create user account.")
+      }
+
+      setIsUserModalOpen(false)
+      setUserForm({ name: "", email: "", roleId: "", password: "" })
+      fetchUsers()
+    } catch (err: any) {
+      console.error(err)
+      setUserError(err.message || "An unexpected error occurred.")
+    } finally {
+      setIsSubmittingUser(false)
+    }
+  }
+
+  const handleDeleteUser = async (email: string) => {
+    if (!confirm(`Are you sure you want to delete user ${email} from this workspace?`)) return
+
+    try {
+      const res = await fetch("/api/users/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error || "Failed to delete user.")
+      } else {
+        fetchUsers()
+      }
+    } catch (err: any) {
+      console.error(err)
+      alert(err.message || "An error occurred.")
+    }
   }
 
   if (viewingRole) {
@@ -130,19 +225,30 @@ export default function RoleManagement() {
                 <TableHead className="font-bold text-[10px] uppercase tracking-widest text-white/40">User ID</TableHead>
                 <TableHead className="font-bold text-[10px] uppercase tracking-widest text-white/40">Name</TableHead>
                 <TableHead className="font-bold text-[10px] uppercase tracking-widest text-white/40">Email</TableHead>
+                <TableHead className="font-bold text-[10px] uppercase tracking-widest text-white/40 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {roleUsers.length === 0 && (
                 <TableRow className="border-none hover:bg-transparent">
-                   <TableCell colSpan={3} className="text-center py-8 text-white/30 text-xs font-mono uppercase tracking-widest">No users assigned to this role</TableCell>
+                   <TableCell colSpan={4} className="text-center py-8 text-white/30 text-xs font-mono uppercase tracking-widest">No users assigned to this role</TableCell>
                 </TableRow>
               )}
               {roleUsers.map(u => (
                  <TableRow key={u.id} className="border-white/5 hover:bg-white/[0.02]">
-                   <TableCell className="font-mono text-xs text-white/40">{u.id}</TableCell>
+                   <TableCell className="font-mono text-xs text-white/40">{u.id.substring(0, 8)}...</TableCell>
                    <TableCell className="font-bold text-white/80">{u.name}</TableCell>
                    <TableCell className="text-white/60 font-mono text-xs">{u.email}</TableCell>
+                   <TableCell className="text-right">
+                     <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       onClick={() => handleDeleteUser(u.email)} 
+                       className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
+                     >
+                       <Trash2 className="h-4 w-4" />
+                     </Button>
+                   </TableCell>
                  </TableRow>
               ))}
             </TableBody>
@@ -223,6 +329,10 @@ export default function RoleManagement() {
                    <Input type="email" value={userForm.email} onChange={(e) => setUserForm({...userForm, email: e.target.value})} className="bg-black/50 border-white/10 py-5 focus-visible:ring-emerald-500 font-mono text-sm" placeholder="jane@rayn.law" />
                  </div>
                  <div className="space-y-2">
+                   <Label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Initial Password</Label>
+                   <Input type="password" value={userForm.password} onChange={(e) => setUserForm({...userForm, password: e.target.value})} className="bg-black/50 border-white/10 py-5 focus-visible:ring-emerald-500 font-mono text-sm" placeholder="••••••••" />
+                 </div>
+                 <div className="space-y-2">
                    <Label className="text-[10px] uppercase tracking-widest text-white/40 font-bold">Role assignment</Label>
                    <select 
                      className="w-full bg-black/50 border border-white/10 rounded py-3 px-3 text-sm font-mono focus:ring-1 focus:ring-emerald-500 outline-none text-white/80"
@@ -235,9 +345,16 @@ export default function RoleManagement() {
                      ))}
                    </select>
                  </div>
+                 {userError && (
+                   <div className="text-red-400 text-xs font-mono bg-red-500/5 border border-red-500/20 p-3 rounded">
+                     {userError}
+                   </div>
+                 )}
                </div>
                <DialogFooter>
-                 <Button onClick={handleSaveUser} disabled={!userForm.name || !userForm.email || !userForm.roleId} className="w-full bg-white text-black py-5 hover:bg-white/90 rounded uppercase tracking-widest text-[10px] font-bold">Add to Workspace</Button>
+                 <Button onClick={handleSaveUser} disabled={!userForm.name || !userForm.email || !userForm.roleId || !userForm.password || isSubmittingUser} className="w-full bg-white text-black py-5 hover:bg-white/90 rounded uppercase tracking-widest text-[10px] font-bold">
+                   {isSubmittingUser ? "Adding..." : "Add to Workspace"}
+                 </Button>
                </DialogFooter>
              </DialogContent>
            </Dialog>

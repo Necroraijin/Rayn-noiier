@@ -153,15 +153,32 @@ export default function LoginPage() {
     setStep("authenticating")
     setIsLoading(true)
 
-    // Check if the credentials correspond to mock domains
-    const isMockDomain = loginEmail.endsWith("@rayn.law") || loginEmail.endsWith("@apexlegal.com") || loginEmail.endsWith("@meridian.co.uk")
+    // Check if the credentials correspond to mock domains (allow bypassing via env for real production validation)
+    const isMockDomain = (loginEmail.endsWith("@rayn.law") || loginEmail.endsWith("@apexlegal.com") || loginEmail.endsWith("@meridian.co.uk")) && process.env.NEXT_PUBLIC_DISABLE_MOCK_LOGIN !== "true"
 
     setTimeout(() => {
       if (isMockDomain) {
         login(loginEmail, role)
       } else {
-        // Redirection to AWS Cognito hosted login screen via NextAuth
-        signIn("cognito", { callbackUrl: "/" })
+        // Authenticate directly via AWS Cognito credentials provider
+        signIn("credentials", {
+          redirect: false,
+          username: loginEmail,
+          password: password,
+          callbackUrl: "/"
+        }).then((res) => {
+          if (res?.error) {
+            setError(res.error || "Authentication failed. Please check your credentials.")
+            setStep("credentials")
+            setIsLoading(false)
+          } else {
+            window.location.href = "/"
+          }
+        }).catch((err) => {
+          setError(err.message || "An unexpected auth error occurred.")
+          setStep("credentials")
+          setIsLoading(false)
+        })
       }
     }, 2200)
   }
